@@ -1,38 +1,88 @@
+# ──────────────────────────────
 # Unity
-/[Ll]ibrary/
-/[Tt]emp/
-/[Oo]bj/
-/[Bb]uild/
-/[Bb]uilds/
-/[Ll]ogs/
-/[Uu]ser[Ss]ettings/
+# ──────────────────────────────
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+/[Pp]ackages/packages-lock.json
+/Library/PackageCache/
+/Library/PackageManager-State/
 
 # Visual Studio / Rider
-/[Ee]xported[Oo]bj/
-/[Aa]ssets/Plugins/Editor/
-/*.csproj
-/*.unityproj
-/*.sln
-/*.suo
-/*.tmp
-/*.user
-/*.userprefs
-/*.pidb
-/*.booproj
-/*.svd
-/*.pdb
-/*.mdb
-/*.opendb
-/*.VC.db
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.vscode/
+*.vs/
+/ExportedObj/
+/.consulo/
 
 # macOS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbnails
 
-# Unity Package Manager
-/[Pp]ackages/manifest.json
-/[Pp]ackages/packages-lock.json
+# Windows
+Thumbs.db
+Desktop.ini
 
-*.zip
-*.rar
-*.7z
+# Builds
+*.apk
+*.aab
 *.unitypackage
+*.app
+*.exe
+
+# Crashlytics
+crashlytics
+crashlytics-data
+crashlytics-build
+
+# Others
+*.manifest
+*.asset
+*.unity
+*.prefab
+*.mat
+*.meta
+*.anim
+*.controller
+*.overrideController
+*.physicMaterial
+*.physicsMaterial2D
+*.prefab
+*.preset
+*.renderTexture
+*.shader
+*.mask
+*.brush
+*.flare
+*.cginc
+*.compute
+
+!/SlotMachineGame/Assets/**/*.meta
+!/SlotMachineGame/ProjectSettings/**/*.meta
+!/MemoryCardGame/Assets/**/*.meta
+!/MemoryCardGame/ProjectSettings/**/*.meta.plastic/
+.plastic*
+Packages/packages-lock.json
