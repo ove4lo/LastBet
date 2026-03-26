@@ -19,3 +19,17 @@
 *.VC.db
 /[Aa]ssets/[Aa]ssets/
 /[Aa]ssets/[Ss]tream*[Aa]ssets/
+
+# Plugins (DOTween и другие Asset Store пакеты)
+[Aa]ssets/[Pp]lugins/
+
+# Meta файлы для папок, которые игнорируются
+[Aa]ssets/[Pp]lugins.meta
+
+# Unity generated
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# VS Code
+.vscode/

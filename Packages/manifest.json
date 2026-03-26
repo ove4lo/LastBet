@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "com.inspiaaa.unityhfsm": "https://github.com/Inspiaaa/UnityHFSM.git",
+    "com.unity.addressables": "2.9.1",
+    "com.unity.cinemachine": "3.1.6",
     "com.unity.collab-proxy": "2.11.4",
     "com.unity.feature.2d": "2.0.2",
     "com.unity.ide.rider": "3.0.39",
@@ -7,9 +10,10 @@
     "com.unity.inputsystem": "1.19.0",
     "com.unity.multiplayer.center": "1.0.1",
     "com.unity.test-framework": "1.6.0",
-    "com.unity.timeline": "1.8.11",
+    "com.unity.timeline": "1.8.12",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.10",
+    "dev.yarnspinner.unity": "https://github.com/YarnSpinnerTool/YarnSpinner-Unity.git#current",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
