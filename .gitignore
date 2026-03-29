@@ -1,35 +1,59 @@
+# ОСНОВНЫЕ ПАПКИ 
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
 [Bb]uild/
 [Bb]uilds/
+[Bb]uildLogs/
 [Ll]ogs/
 [Mm]emoryCaptures/
+[Uu]serSettings/
+[Ee]xports/
+
+# СИСТЕМНЫЕ ФАЙЛЫ
 .DS_Store
+Thumbs.db
+Desktop.ini
+
+# ФАЙЛЫ РЕДАКТОРОВ КОДА
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.csproj.user
+*.sln
 *.suo
-*.tmp
 *.user
 *.userprefs
 *.pidb
-*.booproj
-*.svd
+*.pidb.meta
 *.pdb
 *.mdb
 *.opendb
 *.VC.db
-/[Aa]ssets/[Aa]ssets/
-/[Aa]ssets/[Ss]tream*[Aa]ssets/
 
-# Plugins (DOTween и другие Asset Store пакеты)
-[Aa]ssets/[Pp]lugins/
+# Rider
+.idea/
+*.sln.iml
 
-# Meta файлы для папок, которые игнорируются
-[Aa]ssets/[Pp]lugins.meta
+# DOTWEEN
+[Aa]ssets/Plugins/Demigiant/DOTween.meta
+[Aa]ssets/Plugins/Demigiant/DOTween/
+[Aa]ssets/Plugins/Demigiant/DOTweenPro/
+[Aa]ssets/Plugins/Demigiant/DOTweenPro.meta
+[Aa]ssets/Plugins/Demigiant/DOTween/Editor/
+[Aa]ssets/Plugins/Demigiant/DOTween/Editor.meta
 
-# Unity generated
-*.pidb.meta
-*.pdb.meta
-*.mdb.meta
+# ОСТАЛЬНОЕ
+*.tmp
+*.booproj
+*.svd
+*.exe
+*.apk
+*.aab
 
-# VS Code
-.vscode/
+# Auto-generated Unity files
+/Assets/AssetStoreTools*
+
+# Addressables
+[Aa]ssets/AddressableAssetsData/Generated/
