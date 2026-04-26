@@ -10,10 +10,12 @@ public class MainMenuController : MonoBehaviour
 
     void Start()
     {
+        Debug.Log($"[MainMenu] GameManager.Instance = {GameManager.Instance}");
+        Debug.Log($"[MainMenu] SceneTransition.Instance = {SceneTransition.Instance}");
         // Показываем "Продолжить" только если есть сохранение
         if (continueButton != null)
             continueButton.SetActive(SaveSystem.HasSave());
-
+        
         // Скрываем "Выход" в WebGL
         if (quitButton != null)
         {

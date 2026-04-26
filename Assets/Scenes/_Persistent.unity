@@ -386,7 +386,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1941489046}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1612028237}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -424,13 +424,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   gameState: {fileID: 11400000, guid: 4a4f38cd020bd6b47b8bc703fff4db4d, type: 2}
   sceneOrder:
-  - Scene1_Cabaret
   - Scene2_Dressing
+  - Scene1_Cabaret
   - Scene3_Bar
   - Scene4_Casino
   - Scene5_Backstage
   - Scene6_Office
-  - Scene7_FinalStake
+  - Scene7_End
 --- !u!4 &1131571242
 Transform:
   m_ObjectHideFlags: 0
@@ -489,7 +489,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1023057431}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1941489043
@@ -523,7 +524,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -571,8 +572,7 @@ RectTransform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 519420032}
-  - {fileID: 1023057431}
-  - {fileID: 974372776}
   - {fileID: 1131571242}
   - {fileID: 1612028237}
+  - {fileID: 519420032}
+  - {fileID: 974372776}

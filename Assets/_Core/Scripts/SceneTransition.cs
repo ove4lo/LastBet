@@ -1,50 +1,73 @@
-// Плавный переход (fade) между сценами через DOTween
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using DG.Tweening;
 
 public class SceneTransition : MonoBehaviour
 {
     public static SceneTransition Instance { get; private set; }
 
-    [Header("Настройки перехода")]
-    public Image fadeImage;
+    [SerializeField] private Image fadeImage;
+    [SerializeField] private float fadeDuration = 0.4f;
 
-    [Tooltip("Длительность затемнения в секундах")]
-    public float fadeDuration = 0.4f;
-
-    void Awake()
+    private void Awake()
     {
-        if (Instance != null) { Destroy(gameObject); return; }
+        Debug.Log($"[SceneTransition] Awake | object={name} | activeSelf={gameObject.activeSelf} | scene={gameObject.scene.name}", this);
+
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning($"[SceneTransition] Duplicate destroyed: {name}", this);
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Начинаем с прозрачного экрана
-        if (fadeImage != null)
-            fadeImage.color = new Color(0f, 0f, 0f, 0f);
+        Debug.Log($"[SceneTransition] Instance set | fadeImage={fadeImage}", this);
+
+        if (fadeImage == null)
+        {
+            Debug.LogError("[SceneTransition] fadeImage is NULL", this);
+            return;
+        }
+
+        var c = fadeImage.color;
+        fadeImage.color = new Color(c.r, c.g, c.b, 0f);
+        fadeImage.raycastTarget = false;
     }
 
-    // Затемнить → загрузить сцену → осветлить
     public void FadeToScene(string sceneName)
     {
-        // Блокируем клики во время перехода
+        Debug.Log($"[SceneTransition] FadeToScene: {sceneName} | fadeImage={fadeImage}", this);
+
+        if (fadeImage == null)
+        {
+            Debug.LogError("[SceneTransition] FadeToScene aborted: fadeImage is NULL", this);
+            return;
+        }
+
         fadeImage.raycastTarget = true;
 
+        SceneManager.sceneLoaded += OnSceneLoaded;
         fadeImage.DOFade(1f, fadeDuration)
             .SetUpdate(true)
             .OnComplete(() =>
             {
                 SceneManager.LoadScene(sceneName);
-                SceneManager.sceneLoaded += OnSceneLoaded;
             });
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded; // отписываемся
+        SceneManager.sceneLoaded -= OnSceneLoaded;
 
-        // Осветляем после загрузки
+        if (fadeImage == null)
+        {
+            Debug.LogError("[SceneTransition] OnSceneLoaded: fadeImage is NULL", this);
+            return;
+        }
+
         fadeImage.DOFade(0f, fadeDuration)
             .SetUpdate(true)
             .OnComplete(() => fadeImage.raycastTarget = false);

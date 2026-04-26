@@ -51,6 +51,8 @@ Desktop.ini
 *.exe
 *.apk
 *.aab
+*.slnx
+*.dvlt
 
 # Auto-generated Unity files
 /Assets/AssetStoreTools*

@@ -27,29 +27,30 @@ public class GameManager : MonoBehaviour
 
     // ИНИЦИАЛИЗАЦИЯ
 
-    void Awake()
+    private void Awake()
     {
-        if (Instance != null)
+        Debug.Log($"[GameManager] Awake | name={name} | scene={gameObject.scene.name} | active={gameObject.activeInHierarchy}", this);
+
+        if (Instance != null && Instance != this)
         {
+            Debug.LogWarning("[GameManager] Duplicate destroyed", this);
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
-        DontDestroyOnLoad(gameObject); // не уничтожать при смене сцен
+        DontDestroyOnLoad(gameObject);
     }
 
-    void Start()
+    private void Start()
     {
-        if (SaveSystem.HasSave())
-        {
-            SaveSystem.Load(gameState);
-            Debug.Log("[GameManager] Найдено сохранение, загружено");
-        }
-        else
-        {
-            gameState.ResetAll();
-            Debug.Log("[GameManager] Сохранения нет, новая игра");
-        }
+        Debug.Log($"[GameManager] Start | Instance={Instance}", this);
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    private void OnDestroy()
+    {
+        Debug.LogWarning($"[GameManager] OnDestroy | name={name} | scene={gameObject.scene.name}", this);
     }
 
     // ЗАПУСК/ПРОДОЛЖЕНИЕ ИГРЫ
