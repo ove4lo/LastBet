@@ -45,9 +45,20 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Debug.Log($"[GameManager] Start | Instance={Instance}", this);
-        SceneManager.LoadScene("MainMenu");
+        
+        if (SaveSystem.HasSave())
+        {
+            SaveSystem.Load(gameState);
+            Debug.Log("[GameManager] Сохранение загружено");
+        }
+        else
+        {
+            gameState.ResetAll();
+        }
+        
+        SceneTransition.Instance.FadeToScene("MainMenu");
     }
-
+    
     private void OnDestroy()
     {
         Debug.LogWarning($"[GameManager] OnDestroy | name={name} | scene={gameObject.scene.name}", this);
@@ -126,7 +137,7 @@ public class GameManager : MonoBehaviour
                 case MiniGameType.CardGame:
                     gameState.AddToken(TokenType.Obedience); break;
                 case MiniGameType.Roulette:
-                    gameState.AddToken(TokenType.Analysis);  break;
+                    gameState.AddToken(TokenType.Analysis); break;
             }
         }
         SaveSystem.Save(gameState);

@@ -131,6 +131,26 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2958262985454349543, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: m_Alpha
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2958262986393358535, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2958262986393358535, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 759338484}
+    - target: {fileID: 2958262986393358535, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnNodeEnter
+      objectReference: {fileID: 0}
+    - target: {fileID: 2958262986393358535, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Yarn.Unity.LinePresenter, YarnSpinner.Unity
+      objectReference: {fileID: 0}
     - target: {fileID: 2958262986520364887, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -177,6 +197,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2958262987206614837, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3859336324316773513, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: inputMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3859336324316773513, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: separateHurryUpAndAdvanceControls
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7262066351540048079, guid: 52571f68872914e24837210513edea1d, type: 3}
@@ -254,7 +282,11 @@ PrefabInstance:
     - target: {fileID: 8309902628685535410, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: yarnProject
       value: 
-      objectReference: {fileID: 7545569452688597077, guid: 9c031b578f04f8f47a81fedc6bef222d, type: 3}
+      objectReference: {fileID: 7545569452688597077, guid: bc04fb72e78fafa4f9c3d52be3e26e15, type: 3}
+    - target: {fileID: 8309902628685535410, guid: 52571f68872914e24837210513edea1d, type: 3}
+      propertyPath: verboseLogging
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9078442560890639579, guid: 52571f68872914e24837210513edea1d, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -792,6 +824,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &759338484 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2958262985454349548, guid: 52571f68872914e24837210513edea1d, type: 3}
+  m_PrefabInstance: {fileID: 201914697}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7dd50f871a60b4bbe88a71d308b2613f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &830031735
 GameObject:
   m_ObjectHideFlags: 0
@@ -1668,7 +1711,7 @@ MonoBehaviour:
   cocktailInteractable: {fileID: 624143306}
   doorInteractable: {fileID: 1544526369}
   machineInteractable: {fileID: 2126866349}
-  dialogueTrigger: {fileID: 0}
+  dialogueTrigger: {fileID: 201914700}
 --- !u!4 &1420070958
 Transform:
   m_ObjectHideFlags: 0

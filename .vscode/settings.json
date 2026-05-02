@@ -69,5 +69,5 @@
     },
     "dotnet.defaultSolution": "LastBet.slnx",
     "dotnet.enableWorkspaceBasedDevelopment": false,
-    "files.autoSave": "onFocusChange"
+    "files.autoSave": "afterDelay"
 }

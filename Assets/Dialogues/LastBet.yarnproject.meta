@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 9c031b578f04f8f47a81fedc6bef222d
+guid: bc04fb72e78fafa4f9c3d52be3e26e15
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -15,5 +15,3 @@ ScriptedImporter:
   useAddressableAssets: 0
   unityLocalisationStringTableCollectionGUID: 
   UseUnityLocalisationSystem: 0
-  useCustomLineTagger: 0
-  lineTaggerClass: 
