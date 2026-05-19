@@ -3,37 +3,77 @@ using UnityEngine;
 
 public class CardDeck : MonoBehaviour
 {
-    [Header("Колода")]
-    [Tooltip("Перетащить сюда все 12 CardData.asset из Assets/MiniGames/CardGame/Data/Cards/")]
+    [Header("Все карты")]
     public List<CardData> allCards = new();
 
-    // Рабочая колода — копия allCards после перемешивания
-    private List<CardData> _deck = new();
+    private List<CardData> _drawPile = new();
+    private List<CardData> _discardPile = new();
 
-    // Перемешать колоду алгоритмом Fisher-Yates
-    public void Shuffle()
+    public void Initialize()
     {
-        _deck = new List<CardData>(allCards);
-        for (int i = _deck.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            (_deck[i], _deck[j]) = (_deck[j], _deck[i]);
-        }
+        _drawPile = new List<CardData>(allCards);
+        _discardPile.Clear();
+        Shuffle(_drawPile);
     }
 
-    // Взять <paramref name="count"/> карт с верха колоды.
-    // Если карт меньше — вернёт сколько есть
     public List<CardData> Draw(int count)
     {
         var drawn = new List<CardData>();
-        for (int i = 0; i < count && _deck.Count > 0; i++)
+
+        for (int i = 0; i < count; i++)
         {
-            drawn.Add(_deck[0]);
-            _deck.RemoveAt(0);
+            if (_drawPile.Count == 0)
+                ReshuffleDiscardIntoDrawPile();
+
+            if (_drawPile.Count == 0)
+                break;
+
+            drawn.Add(_drawPile[0]);
+            _drawPile.RemoveAt(0);
         }
+
         return drawn;
     }
 
-    // Сколько карт осталось в колоде
-    public int Remaining => _deck.Count;
+    public void AddToDiscard(CardData card)
+    {
+        if (card == null)
+            return;
+
+        _discardPile.Add(card);
+    }
+
+    public void AddManyToDiscard(IEnumerable<CardData> cards)
+    {
+        if (cards == null)
+            return;
+
+        foreach (var card in cards)
+            AddToDiscard(card);
+    }
+
+    private void ReshuffleDiscardIntoDrawPile()
+    {
+        if (_discardPile.Count == 0)
+            return;
+
+        Debug.Log("[CardDeck] Сброс перемешан обратно в колоду");
+
+        _drawPile = new List<CardData>(_discardPile);
+        _discardPile.Clear();
+
+        Shuffle(_drawPile);
+    }
+
+    private void Shuffle(List<CardData> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
+
+    public int DrawPileCount => _drawPile.Count;
+    public int DiscardPileCount => _discardPile.Count;
 }

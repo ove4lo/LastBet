@@ -1,5 +1,3 @@
-// Управляет раундами, клиентами, подсчётом очков и передаёт результат
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -8,164 +6,244 @@ using DG.Tweening;
 public class CardGameManager : MonoBehaviour
 {
     [Header("Настройки игры")]
-    [Tooltip("Сумма очков за всю игру (3 раунда), необходимая для победы")]
-    public int winScoreThreshold = 8;
+    public int winScoreThreshold = 35;
+    public int totalRounds = 8;
+    public int cardsToDeal = 6;
 
-    [Tooltip("Количество клиентов (раундов) за одну игру")]
-    public int totalRounds = 3;
+    [Header("Генерация клиентов")]
+    public Sprite[] customerPortraits;
 
-    [Tooltip("Карт раздаётся в руку за раунд (из них выбирают 3)")]
-    public int cardsToDeal = 4;
+    [TextArea(2, 4)]
+    public string[] requestTexts =
+    {
+        "Люблю горечь. Сделай выразительный напиток.",
+        "Хочу цитрусовый вкус. Без лишней грязи.",
+        "Налей что-нибудь зелёное и крепкое.",
+        "Смешай три разных вкуса.",
+        "Хочу чистый вкус без лишнего.",
+        "Только без тухлятины.",
+        "Мне нужен рискованный напиток.",
+        "Сделай что-нибудь странное, но годное."
+    };
 
     [Header("UI: Клиент")]
-    [Tooltip("Image — иконка обязательного цвета (Required). Дочерний объект CustomerPanel")]
-    public Image customerRequiredIcon;
-
-    [Tooltip("Image — иконка предпочтительного цвета (Preferred). Дочерний объект CustomerPanel")]
-    public Image customerPreferredIcon;
-
-    [Tooltip("Текст над иконками клиента, например «Клиент хочет:»")]
-    public TextMeshProUGUI customerLabel;
+    public CustomerView customerView;
 
     [Header("UI: Слоты ряда")]
-    [Tooltip("3 слота по порядку слева направо — Slot_0, Slot_1, Slot_2")]
     public CardSlot[] rowSlots = new CardSlot[3];
 
     [Header("UI: Рука игрока")]
-    [Tooltip("Transform с HorizontalLayoutGroup — сюда спавнятся карты руки")]
     public Transform handPanel;
-
-    [Tooltip("Префаб карты (Card.prefab) — нужен для Instantiate")]
+    public HandFanLayout handFanLayout;
     public GameObject cardViewPrefab;
 
     [Header("UI: Счёт и раунд")]
-    [Tooltip("Текст «Очки: N»")]
     public TextMeshProUGUI scoreText;
-
-    [Tooltip("Текст «Клиент N/3»")]
     public TextMeshProUGUI roundText;
 
     [Header("UI: Панель результата")]
-    [Tooltip("GameObject ResultPanel — скрыт в начале, показывается по итогу игры")]
     public GameObject resultPanel;
-
-    [Tooltip("Текст результата внутри ResultPanel")]
     public TextMeshProUGUI resultText;
-
-    [Tooltip("Кнопка «Продолжить» внутри ResultPanel")]
     public Button continueButton;
 
-    [Header("Иконки цветов")]
-    [Tooltip("Спрайты иконок в порядке enum: [0]=Red [1]=Yellow [2]=Blue [3]=Black\n" +
-             "Используются для отображения Required/Preferred у клиента")]
-    public Sprite[] colorIcons = new Sprite[4];
+    [Header("DEBUG")]
+    public TextMeshProUGUI deckDebugText;
 
-    // ПРИВАТНОЕ СОСТОЯНИЕ
     private CardDeck _deck;
+    private CustomerData _currentCustomer;
     private int _totalScore;
     private int _currentRound;
-    private CardColor _requiredColor;
-    private CardColor _preferredColor;
-    private readonly List<CardView> _handViews = new();
 
-    // ЖИЗНЕННЫЙ ЦИКЛ
-    void Start()
+    private readonly System.Collections.Generic.List<CardView> _handViews = new();
+
+    private void Start()
     {
         _deck = GetComponent<CardDeck>();
-        _deck.Shuffle();
 
-        resultPanel.SetActive(false);
+        if (_deck == null)
+        {
+            Debug.LogError("[CardGameManager] CardDeck не найден", this);
+            return;
+        }
+
+        if (cardViewPrefab == null)
+        {
+            Debug.LogError("[CardGameManager] CardViewPrefab не назначен", this);
+            return;
+        }
+
+        if (handPanel == null)
+        {
+            Debug.LogError("[CardGameManager] HandPanel не назначен", this);
+            return;
+        }
+
+        _deck.Initialize();
+
+        if (resultPanel != null)
+            resultPanel.SetActive(false);
+
         _totalScore = 0;
         _currentRound = 0;
 
         StartRound();
     }
 
-    // РАУНД
-    void StartRound()
+    private void StartRound()
     {
         _currentRound++;
-        roundText.text = $"Клиент {_currentRound} / {totalRounds}";
 
-        // Очистить слоты от карт предыдущего раунда
+        if (roundText != null)
+            roundText.text = $"Клиент {_currentRound} / {totalRounds}";
+
         foreach (var slot in rowSlots)
-            slot.Clear();
+        {
+            if (slot != null)
+                slot.Clear();
+        }
 
-        // Раздать карты в руку
         ClearHand();
+
+        _currentCustomer = GenerateRandomCustomer();
+
+        if (customerView != null)
+        {
+            customerView.Show(
+                _currentCustomer.portraitSprite,
+                _currentCustomer.requestText
+            );
+        }
+
         var drawnCards = _deck.Draw(cardsToDeal);
+
+        if (drawnCards.Count == 0)
+        {
+            EndGame(false, "Карты закончились");
+            return;
+        }
+
         foreach (var data in drawnCards)
             SpawnCardInHand(data);
 
-        // Сгенерировать нового клиента
-        GenerateCustomer(drawnCards);
+        RefreshHandLayout();
         UpdateScoreUI();
     }
 
-    // Клиент
-    void GenerateCustomer(List<CardData> dealtCards)
+    private CustomerData GenerateRandomCustomer()
     {
-        // Required берём из цветов, которые точно есть в руке → игрок всегда может выполнить
-        var available = new List<CardColor>();
-        foreach (var d in dealtCards)
-            if (d.color != CardColor.None && !available.Contains(d.color))
-                available.Add(d.color);
+        var customer = ScriptableObject.CreateInstance<CustomerData>();
 
-        _requiredColor  = available[Random.Range(0, available.Count)];
-        _preferredColor = available[Random.Range(0, available.Count)];
+        customer.customerName = "Гость";
 
-        // Обновить иконки клиента
-        customerRequiredIcon.sprite  = ColorToIcon(_requiredColor);
-        customerPreferredIcon.sprite = ColorToIcon(_preferredColor);
+        if (customerPortraits != null && customerPortraits.Length > 0)
+            customer.portraitSprite = customerPortraits[Random.Range(0, customerPortraits.Length)];
 
-        if (customerLabel != null)
-            customerLabel.text = _requiredColor == _preferredColor
-                ? $"Требует: {ColorName(_requiredColor)} (особо любит!)"
-                : $"Требует: {ColorName(_requiredColor)}  |  Любит: {ColorName(_preferredColor)}";
+        customer.requiredType = RandomRecipeType();
+        customer.preferredType = RandomRecipeType();
+        customer.bonusForPreferred = 1;
+
+        customer.ruleType = RandomRule();
+
+        customer.requestText = BuildRequestText(customer);
+
+        return customer;
     }
 
-    Sprite ColorToIcon(CardColor c)
+    private CocktailType RandomRecipeType()
     {
-        int idx = (int)c - 1; // Red=1→0, Yellow=2→1, Blue=3→2, Black=4→3
-        return (idx >= 0 && idx < colorIcons.Length) ? colorIcons[idx] : null;
+        int value = Random.Range(0, 3);
+
+        return value switch
+        {
+            0 => CocktailType.Bitter,
+            1 => CocktailType.Lemonchello,
+            _ => CocktailType.Absinthe
+        };
     }
 
-    static string ColorName(CardColor c) => c switch
+    private CustomerRuleType RandomRule()
     {
-        CardColor.Red    => "Spirits",
-        CardColor.Yellow => "Citrus",
-        CardColor.Blue   => "Bitter",
-        CardColor.Black  => "Spoiled",
-        _ => "?"
-    };
+        int value = Random.Range(0, 5);
 
-    // Рука игрока
-    void SpawnCardInHand(CardData data)
+        return value switch
+        {
+            0 => CustomerRuleType.None,
+            1 => CustomerRuleType.NoDamagedCards,
+            2 => CustomerRuleType.WantsRainbow,
+            3 => CustomerRuleType.WantsTriplet,
+            _ => CustomerRuleType.NoAdjacencyBonus
+        };
+    }
+
+    private string BuildRequestText(CustomerData customer)
+    {
+        if (requestTexts != null && requestTexts.Length > 0)
+        {
+            string randomText = requestTexts[Random.Range(0, requestTexts.Length)];
+
+            if (!string.IsNullOrWhiteSpace(randomText))
+                return randomText;
+        }
+
+        string required = TypeName(customer.requiredType);
+
+        return customer.ruleType switch
+        {
+            CustomerRuleType.NoDamagedCards => $"Хочу {required}. Только без тухлятины.",
+            CustomerRuleType.WantsRainbow => $"Хочу {required}. Смешай три разных вкуса.",
+            CustomerRuleType.WantsTriplet => $"Хочу {required}. Сделай чистый вкус.",
+            CustomerRuleType.NoAdjacencyBonus => $"Хочу {required}. Без хитрых сочетаний.",
+            _ => $"Хочу {required}. Любимый вкус: {TypeName(customer.preferredType)}."
+        };
+    }
+
+    private void SpawnCardInHand(CardData data)
     {
         var go = Instantiate(cardViewPrefab, handPanel);
         var cv = go.GetComponent<CardView>();
+
+        if (cv == null)
+        {
+            Debug.LogError("[CardGameManager] В CardViewPrefab нет CardView", go);
+            Destroy(go);
+            return;
+        }
+
         cv.Init(data, this);
         _handViews.Add(cv);
 
-        // Анимация появления
-        go.transform.localScale = Vector3.zero;
-        go.transform.DOScale(1f, 0.22f).SetDelay(_handViews.Count * 0.05f).SetEase(Ease.OutBack);
+        go.transform.localScale = Vector3.one;
     }
 
-    void ClearHand()
+    private void RefreshHandLayout()
+    {
+        if (handFanLayout != null)
+            handFanLayout.Refresh();
+    }
+
+    private void ClearHand()
     {
         foreach (var cv in _handViews)
-            if (cv != null) Destroy(cv.gameObject);
+        {
+            if (cv != null)
+                Destroy(cv.gameObject);
+        }
+
         _handViews.Clear();
     }
 
-    // СОБЫТИЕ: игрок кликнул карту в руке
     public void OnCardSelectedFromHand(CardView cardView)
     {
-        // Найти первый свободный слот
+        if (cardView == null)
+            return;
+
         bool placed = false;
+
         foreach (var slot in rowSlots)
         {
+            if (slot == null)
+                continue;
+
             if (!slot.HasCard)
             {
                 slot.PlaceCard(cardView);
@@ -175,80 +253,113 @@ public class CardGameManager : MonoBehaviour
             }
         }
 
-        if (!placed) return; // все слоты заняты — игнорируем клик
+        if (!placed)
+            return;
 
-        // Если ряд заполнен — считать очки
-        if (RowFull()) EvaluateRound();
+        RefreshHandLayout();
+
+        if (RowFull())
+            EvaluateRound();
     }
 
-    bool RowFull()
+    private bool RowFull()
     {
         foreach (var slot in rowSlots)
-            if (!slot.HasCard) return false;
+        {
+            if (slot == null || !slot.HasCard)
+                return false;
+        }
+
         return true;
     }
 
-    // ПОДСЧЁТ ОЧКОВ ЗА РАУНД
-    void EvaluateRound()
+    private void EvaluateRound()
     {
-        // Собрать карты из слотов
         var cards = new CardData[3];
+
         for (int i = 0; i < 3; i++)
             cards[i] = rowSlots[i].PlacedCard;
 
-        // CardGameScoring.CalculateRoundScore возвращает -1 при отсутствии required
-        int roundScore = CardGameScoring.CalculateRoundScore(cards, _requiredColor, _preferredColor);
+        RoundScoreResult result = CardGameScoring.CalculateRoundScore(cards, _currentCustomer);
 
-        if (roundScore < 0)
+        _deck.AddManyToDiscard(cards);
+
+        if (result.IsFatal)
         {
-            // Нет required цвета — мгновенное поражение
-            EndGame(won: false, reason: $"Нет нужного ингредиента ({ColorName(_requiredColor)})!");
+            EndGame(false, result.Reason);
             return;
         }
 
-        _totalScore += roundScore;
+        if (!result.IsFailed)
+            _totalScore += result.Score;
+
         UpdateScoreUI();
 
-        // Визуальная пауза перед следующим раундом
         DOVirtual.DelayedCall(0.8f, () =>
         {
             if (_currentRound >= totalRounds)
-                EndGame(won: _totalScore >= winScoreThreshold);
+                EndGame(_totalScore >= winScoreThreshold);
             else
                 StartRound();
         });
     }
 
-    // КОНЕЦ ИГРЫ
-    void EndGame(bool won, string reason = "")
+    private void EndGame(bool won, string reason = "")
     {
-        resultPanel.SetActive(true);
+        if (resultPanel != null)
+            resultPanel.SetActive(true);
 
-        if (won)
-            resultText.text = $"Клиент доволен!\nИтого: {_totalScore} очков";
-        else if (string.IsNullOrEmpty(reason))
-            resultText.text = $"Недостаточно качества...\nИтого: {_totalScore} / {winScoreThreshold}";
-        else
-            resultText.text = $"Поражение!\n{reason}";
-
-        // Анимация появления панели
-        resultPanel.transform.localScale = Vector3.zero;
-        resultPanel.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack);
-
-        // Привязать кнопку
-        continueButton.onClick.RemoveAllListeners();
-        continueButton.onClick.AddListener(() =>
+        if (resultText != null)
         {
-            if (GameManager.Instance != null)
-                GameManager.Instance.FinishMiniGame(won);
+            if (won)
+                resultText.text = $"Клиент доволен!\nИтого: {_totalScore} очков";
+            else if (string.IsNullOrEmpty(reason))
+                resultText.text = $"Недостаточно качества...\nИтого: {_totalScore} / {winScoreThreshold}";
             else
-                Debug.LogWarning("CardGameManager: GameManager.Instance не найден! " +
-                                 "Убедись что сцена _Persistent загружена.");
-        });
+                resultText.text = $"Поражение!\n{reason}";
+        }
+
+        if (resultPanel != null)
+        {
+            resultPanel.transform.localScale = Vector3.zero;
+            resultPanel.transform.DOScale(1f, 0.3f).SetEase(Ease.OutBack);
+        }
+
+        if (continueButton != null)
+        {
+            continueButton.onClick.RemoveAllListeners();
+            continueButton.onClick.AddListener(() =>
+            {
+                if (GameManager.Instance != null)
+                    GameManager.Instance.FinishMiniGame(won);
+                else
+                    Debug.LogWarning("[CardGameManager] GameManager.Instance не найден");
+            });
+        }
     }
-    
-    void UpdateScoreUI()
+
+    private void UpdateScoreUI()
     {
-        scoreText.text = $"Очки: {_totalScore}  (нужно {winScoreThreshold})";
+        if (scoreText != null)
+            scoreText.text = $"Очки: {_totalScore} / {winScoreThreshold}";
+
+        if (deckDebugText != null && _deck != null)
+        {
+            deckDebugText.text =
+                $"Колода: {_deck.DrawPileCount}\n" +
+                $"Сброс: {_deck.DiscardPileCount}";
+        }
+    }
+
+    private string TypeName(CocktailType type)
+    {
+        return type switch
+        {
+            CocktailType.Bitter => "Биттер",
+            CocktailType.Lemonchello => "Лимончелло",
+            CocktailType.Absinthe => "Абсент",
+            CocktailType.Damaged => "Испорченная",
+            _ => "любой вкус"
+        };
     }
 }

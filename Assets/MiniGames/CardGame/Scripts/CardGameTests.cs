@@ -3,166 +3,456 @@ using UnityEngine;
 
 public class CardGameTests
 {
-    static CardData Card(CardColor color, int value,
-        CardColor leftAdj  = CardColor.None,
-        CardColor rightAdj = CardColor.None,
-        int adjBonus       = 0)
+    private static CardData Card(
+        CocktailType type,
+        int points,
+        CocktailType requiredLeft = CocktailType.None,
+        CocktailType requiredRight = CocktailType.None,
+        int adjacencyBonus = 0,
+        CardEffectType effectType = CardEffectType.None,
+        CocktailType effectTarget = CocktailType.None,
+        int effectAmount = 0)
     {
-        var d = ScriptableObject.CreateInstance<CardData>();
-        d.color              = color;
-        d.value              = value;
-        d.leftAdjacencyColor  = leftAdj;
-        d.rightAdjacencyColor = rightAdj;
-        d.adjacencyBonus      = adjBonus;
-        return d;
+        var card = ScriptableObject.CreateInstance<CardData>();
+
+        card.cocktailType = type;
+        card.points = points;
+
+        card.requiredLeft = requiredLeft;
+        card.requiredRight = requiredRight;
+        card.adjacencyBonus = adjacencyBonus;
+
+        card.effectType = effectType;
+        card.effectTarget = effectTarget;
+        card.effectAmount = effectAmount;
+
+        return card;
     }
 
-    // ТЕСТЫ БОНУСОВ РЕЦЕПТА
-    [Test]
-    public void Triplet_SameColor_GivesBonus4()
+    private static CustomerData Customer(
+        CocktailType required = CocktailType.None,
+        CocktailType preferred = CocktailType.None,
+        CustomerRuleType rule = CustomerRuleType.None,
+        int bonusForPreferred = 1)
     {
-        var cards = new[] {
-            Card(CardColor.Red, 1),
-            Card(CardColor.Red, 2),
-            Card(CardColor.Red, 1)
+        var customer = ScriptableObject.CreateInstance<CustomerData>();
+
+        customer.requiredType = required;
+        customer.preferredType = preferred;
+        customer.ruleType = rule;
+        customer.bonusForPreferred = bonusForPreferred;
+
+        return customer;
+    }
+
+    // ─────────────────────────────────────────────
+    // RECIPE BONUS
+    // ─────────────────────────────────────────────
+
+    [Test]
+    public void Triplet_SameType_GivesBonus3()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 1),
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Bitter, 1)
         };
-        // Все 3 красных → Triplet → бонус +4
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Blue, CardColor.Yellow);
-        Assert.AreEqual(4, bonus, "Triplet должен давать +4");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Lemonchello);
+
+        Assert.AreEqual(3, bonus);
     }
 
     [Test]
-    public void Triplet_PreferredColor_GivesBonus8()
+    public void Triplet_PreferredType_GivesBonus4()
     {
-        var cards = new[] {
-            Card(CardColor.Yellow, 2),
-            Card(CardColor.Yellow, 1),
-            Card(CardColor.Yellow, 2)
+        var cards = new[]
+        {
+            Card(CocktailType.Lemonchello, 2),
+            Card(CocktailType.Lemonchello, 1),
+            Card(CocktailType.Lemonchello, 2)
         };
-        // Triplet + preferred Yellow → 4 × 2 = 8
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Blue, CardColor.Yellow);
-        Assert.AreEqual(8, bonus, "Triplet preferred должен давать +8");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Lemonchello);
+
+        Assert.AreEqual(4, bonus);
     }
 
     [Test]
-    public void Twin_Adjacent_GivesBonus2()
+    public void Twin_Adjacent_GivesBonus1()
     {
-        var cards = new[] {
-            Card(CardColor.Red, 2),
-            Card(CardColor.Red, 1),
-            Card(CardColor.Blue, 2)
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Bitter, 1),
+            Card(CocktailType.Absinthe, 2)
         };
-        // Слоты 0 и 1 — оба Red, рядом → Twin → +2
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Blue, CardColor.Yellow);
-        Assert.AreEqual(2, bonus, "Twin рядом должен давать +2");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Lemonchello);
+
+        Assert.AreEqual(1, bonus);
+    }
+
+    [Test]
+    public void Twin_Preferred_GivesBonus2()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Absinthe, 2),
+            Card(CocktailType.Absinthe, 2),
+            Card(CocktailType.Bitter, 1)
+        };
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Absinthe);
+
+        Assert.AreEqual(2, bonus);
     }
 
     [Test]
     public void Twin_NotAdjacent_GivesNoBonus()
     {
-        // Red на 0 и 2, между ними Blue → НЕ рядом → не Twin
-        var cards = new[] {
-            Card(CardColor.Red,  2),
-            Card(CardColor.Blue, 1),
-            Card(CardColor.Red,  1)
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Absinthe, 1),
+            Card(CocktailType.Bitter, 1)
         };
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Blue, CardColor.Yellow);
-        // Не Triplet, не Twin рядом, не Rainbow (2 уникальных цвета) → 0
-        Assert.AreEqual(0, bonus, "Red не рядом — бонуса нет");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Lemonchello);
+
+        Assert.AreEqual(0, bonus);
     }
 
     [Test]
-    public void Twin_Preferred_GivesBonus4()
+    public void Rainbow_AllDifferent_GivesBonus2()
     {
-        var cards = new[] {
-            Card(CardColor.Blue, 2),
-            Card(CardColor.Blue, 2),
-            Card(CardColor.Red,  1)
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 1),
+            Card(CocktailType.Lemonchello, 1),
+            Card(CocktailType.Absinthe, 1)
         };
-        // Twin Blue рядом, Blue — preferred → 2 × 2 = 4
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Red, CardColor.Blue);
-        Assert.AreEqual(4, bonus, "Twin preferred должен давать +4");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Damaged);
+
+        Assert.AreEqual(2, bonus);
     }
 
     [Test]
-    public void Rainbow_AllDifferent_GivesBonus3()
+    public void Rainbow_PreferredPresent_GivesBonus3()
     {
-        var cards = new[] {
-            Card(CardColor.Red,    1),
-            Card(CardColor.Yellow, 1),
-            Card(CardColor.Blue,   1)
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 1),
+            Card(CocktailType.Lemonchello, 1),
+            Card(CocktailType.Absinthe, 1)
         };
-        // Все 3 разные → Rainbow → +3 (preferred Blue не в cards → нет доп.)
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Red, CardColor.Blue);
-        // Blue есть → +1 дополнительно
-        Assert.AreEqual(4, bonus, "Rainbow + preferred среди цветов → +4");
+
+        int bonus = CardGameScoring.RecipeBonus(cards, CocktailType.Absinthe);
+
+        Assert.AreEqual(3, bonus);
     }
 
-    [Test]
-    public void Rainbow_PreferredNotPresent_GivesBonus3()
-    {
-        var cards = new[] {
-            Card(CardColor.Red,    1),
-            Card(CardColor.Yellow, 1),
-            Card(CardColor.Blue,   1)
-        };
-        // preferred = Black, которого нет → только базовый +3
-        int bonus = CardGameScoring.RecipeBonus(cards, CardColor.Red, CardColor.Black);
-        Assert.AreEqual(3, bonus, "Rainbow без preferred → +3");
-    }
+    // ─────────────────────────────────────────────
+    // ADJACENCY BONUS
+    // ─────────────────────────────────────────────
 
-    // ТЕСТЫ БОНУСА СОСЕДСТВА
     [Test]
     public void Adjacency_LeftConditionMet_GivesBonus()
     {
-        // cards[1] требует Yellow слева → cards[0] Yellow → бонус +1
-        var cards = new[] {
-            Card(CardColor.Yellow, 2),
-            Card(CardColor.Red,    1, leftAdj: CardColor.Yellow, adjBonus: 1),
-            Card(CardColor.Blue,   2)
+        var cards = new[]
+        {
+            Card(CocktailType.Lemonchello, 2),
+            Card(CocktailType.Bitter, 2, requiredLeft: CocktailType.Lemonchello, adjacencyBonus: 1),
+            Card(CocktailType.Absinthe, 2)
         };
-        int adj = CardGameScoring.AdjacencyBonus(cards);
-        Assert.AreEqual(1, adj, "Условие слева выполнено → +1");
+
+        int bonus = CardGameScoring.AdjacencyBonus(cards);
+
+        Assert.AreEqual(1, bonus);
     }
 
     [Test]
-    public void Adjacency_LeftConditionNotMet_NoBonus()
+    public void Adjacency_LeftConditionNotMet_GivesNoBonus()
     {
-        // cards[1] требует Yellow слева, но слева Blue → бонус 0
-        var cards = new[] {
-            Card(CardColor.Blue,   2),
-            Card(CardColor.Red,    1, leftAdj: CardColor.Yellow, adjBonus: 1),
-            Card(CardColor.Yellow, 2)
+        var cards = new[]
+        {
+            Card(CocktailType.Absinthe, 2),
+            Card(CocktailType.Bitter, 2, requiredLeft: CocktailType.Lemonchello, adjacencyBonus: 1),
+            Card(CocktailType.Lemonchello, 2)
         };
-        int adj = CardGameScoring.AdjacencyBonus(cards);
-        Assert.AreEqual(0, adj, "Условие слева не выполнено → 0");
-    }
 
-    // ТЕСТЫ ПОЛНОГО РАУНДА (CalculateRoundScore)
-    [Test]
-    public void RoundScore_NoRequiredColor_ReturnsMinusOne()
-    {
-        var cards = new[] {
-            Card(CardColor.Red,  2),
-            Card(CardColor.Blue, 1),
-            Card(CardColor.Red,  1)
-        };
-        // required = Yellow, которого нет → -1 (поражение)
-        int score = CardGameScoring.CalculateRoundScore(cards, CardColor.Yellow, CardColor.Blue);
-        Assert.AreEqual(-1, score, "Нет required цвета → -1");
+        int bonus = CardGameScoring.AdjacencyBonus(cards);
+
+        Assert.AreEqual(0, bonus);
     }
 
     [Test]
-    public void RoundScore_TwinWithPreferred_CorrectTotal()
+    public void Adjacency_RightConditionMet_GivesBonus()
     {
-        // 2+2 Red рядом, required=Red, preferred=Red
-        // Базовые: 2+2+1=5. Adj: 0. Twin preferred: +4. Итого: 9
-        var cards = new[] {
-            Card(CardColor.Red,  2),
-            Card(CardColor.Red,  2),
-            Card(CardColor.Blue, 1)
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Lemonchello, 3, requiredRight: CocktailType.Absinthe, adjacencyBonus: 2),
+            Card(CocktailType.Absinthe, 2)
         };
-        int score = CardGameScoring.CalculateRoundScore(cards, CardColor.Red, CardColor.Red);
-        Assert.AreEqual(9, score);
+
+        int bonus = CardGameScoring.AdjacencyBonus(cards);
+
+        Assert.AreEqual(2, bonus);
+    }
+
+    [Test]
+    public void RottenBitter_BreaksAdjacentBonuses()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Damaged, -1, effectType: CardEffectType.BreakAdjacentBonuses),
+            Card(CocktailType.Bitter, 2, requiredLeft: CocktailType.Lemonchello, adjacencyBonus: 1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        int bonus = CardGameScoring.AdjacencyBonus(cards);
+
+        Assert.AreEqual(0, bonus);
+    }
+
+    [Test]
+    public void OrangePeel_DoublesRightAdjacencyBonus()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.None, 0, effectType: CardEffectType.DoubleRightAdjacency),
+            Card(CocktailType.Bitter, 2, requiredRight: CocktailType.Absinthe, adjacencyBonus: 1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        int bonus = CardGameScoring.AdjacencyBonus(cards);
+
+        Assert.AreEqual(2, bonus);
+    }
+
+    // ─────────────────────────────────────────────
+    // FULL ROUND SCORE
+    // ─────────────────────────────────────────────
+
+    [Test]
+    public void RoundScore_NoRequiredType_FailsRound()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Absinthe, 1),
+            Card(CocktailType.Bitter, 1)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Lemonchello, preferred: CocktailType.Absinthe)
+        );
+
+        Assert.IsTrue(result.IsFailed);
+        Assert.IsFalse(result.IsFatal);
+        Assert.AreEqual(0, result.Score);
+    }
+
+    [Test]
+    public void RoundScore_RequiredPresent_ReturnsScore()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Absinthe, 1)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Absinthe, preferred: CocktailType.Bitter)
+        );
+
+        // base 2+2+1 = 5
+        // twin Bitter preferred = +2
+        // preferred present customer bonus = +1
+        // total = 8
+        Assert.IsFalse(result.IsFailed);
+        Assert.IsFalse(result.IsFatal);
+        Assert.AreEqual(8, result.Score);
+    }
+
+    [Test]
+    public void RoundScore_NoDamagedCustomerRule_FailsIfDamagedPresent()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Damaged, -1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Bitter, rule: CustomerRuleType.NoDamagedCards)
+        );
+
+        Assert.IsTrue(result.IsFailed);
+        Assert.IsFalse(result.IsFatal);
+        Assert.AreEqual(0, result.Score);
+    }
+
+    [Test]
+    public void RoundScore_WantsRainbow_FailsIfNotRainbow()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Bitter, 1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Bitter, rule: CustomerRuleType.WantsRainbow)
+        );
+
+        Assert.IsTrue(result.IsFailed);
+        Assert.IsFalse(result.IsFatal);
+    }
+
+    [Test]
+    public void RoundScore_WantsTriplet_FailsIfNotTriplet()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Lemonchello, 1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Bitter, rule: CustomerRuleType.WantsTriplet)
+        );
+
+        Assert.IsTrue(result.IsFailed);
+        Assert.IsFalse(result.IsFatal);
+    }
+
+    [Test]
+    public void ToxicMix_DamagedNearby_IsFatal()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Damaged, 6, effectType: CardEffectType.LoseIfDamagedNearby),
+            Card(CocktailType.Damaged, -1),
+            Card(CocktailType.Bitter, 2)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Bitter)
+        );
+
+        Assert.IsTrue(result.IsFailed);
+        Assert.IsTrue(result.IsFatal);
+        Assert.AreEqual(0, result.Score);
+    }
+
+    // ─────────────────────────────────────────────
+    // SPECIAL CARDS
+    // ─────────────────────────────────────────────
+
+    [Test]
+    public void GoldenBitter_NoLemonchelloNearby_GivesZeroBasePoints()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 5,
+                effectType: CardEffectType.ZeroIfNoTargetNearby,
+                effectTarget: CocktailType.Lemonchello),
+            Card(CocktailType.Absinthe, 1),
+            Card(CocktailType.Bitter, 1)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Absinthe)
+        );
+
+        // Golden_Bitter = 0, Absinthe = 1, Bitter = 1
+        // twin Bitter not adjacent? positions 0 and 2 are not adjacent => no twin
+        Assert.IsFalse(result.IsFailed);
+        Assert.AreEqual(2, result.Score);
+    }
+
+    [Test]
+    public void GoldenBitter_WithLemonchelloNearby_KeepsBasePoints()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 5,
+                effectType: CardEffectType.ZeroIfNoTargetNearby,
+                effectTarget: CocktailType.Lemonchello),
+            Card(CocktailType.Lemonchello, 1),
+            Card(CocktailType.Absinthe, 1)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Lemonchello)
+        );
+
+        // base 5+1+1 = 7
+        // rainbow = +2
+        // preferred none = +0
+        Assert.IsFalse(result.IsFailed);
+        Assert.AreEqual(9, result.Score);
+    }
+
+    [Test]
+    public void SharpLimonchello_WithAbsintheNearby_GetsPenalty()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Lemonchello, 4,
+                effectType: CardEffectType.PenaltyIfTargetNearby,
+                effectTarget: CocktailType.Absinthe,
+                effectAmount: -2),
+            Card(CocktailType.Absinthe, 1),
+            Card(CocktailType.Bitter, 1)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Lemonchello)
+        );
+
+        // base: (4-2)+1+1 = 4
+        // rainbow +2
+        Assert.IsFalse(result.IsFailed);
+        Assert.AreEqual(6, result.Score);
+    }
+
+    [Test]
+    public void Mold_InCenter_GetsPenalty()
+    {
+        var cards = new[]
+        {
+            Card(CocktailType.Bitter, 2),
+            Card(CocktailType.Damaged, -2,
+                effectType: CardEffectType.MoldCenterPenalty,
+                effectAmount: -1),
+            Card(CocktailType.Absinthe, 2)
+        };
+
+        var result = CardGameScoring.CalculateRoundScore(
+            cards,
+            Customer(required: CocktailType.Bitter)
+        );
+
+        // base: 2 + (-3) + 2 = 1
+        Assert.IsFalse(result.IsFailed);
+        Assert.AreEqual(1, result.Score);
     }
 }
