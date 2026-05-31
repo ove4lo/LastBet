@@ -1,6 +1,8 @@
 using UnityEngine;
 
-// Общие UI-операции
+/// <summary>
+/// Общие UI-операции, чтобы не копировать CanvasGroup и очистку контейнеров по разным классам.
+/// </summary>
 public static class LastBetUiUtility
 {
     public static void SetPanelVisible(GameObject panel, bool visible)

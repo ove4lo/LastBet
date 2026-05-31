@@ -2,7 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Панель выбора версии
+/// <summary>
+/// Панель выбора версии. Это не проверка ответа, а фиксация того,
+/// как игрок интерпретировал собранные сведения.
+/// </summary>
 public sealed class LastBetSuspectPanel : MonoBehaviour
 {
     [SerializeField] private GameObject panelRoot;
@@ -15,10 +18,10 @@ public sealed class LastBetSuspectPanel : MonoBehaviour
 
     public void Configure(GameObject root, LastBetChoiceButton helga, LastBetChoiceButton victor, LastBetChoiceButton marie)
     {
-        if (panelRoot == null) panelRoot = root;
-        if (helgaChoice == null) helgaChoice = helga;
-        if (victorChoice == null) victorChoice = victor;
-        if (marieChoice == null) marieChoice = marie;
+        if (root != null) panelRoot = root;
+        if (helga != null) helgaChoice = helga;
+        if (victor != null) victorChoice = victor;
+        if (marie != null) marieChoice = marie;
     }
 
     public void Initialize(Action<LastBetSuspect> onSelected)
@@ -61,6 +64,7 @@ public sealed class LastBetSuspectPanel : MonoBehaviour
 
         choice.BindDefaults();
         Button button = go.GetComponent<Button>() ?? go.AddComponent<Button>();
+        // Не отключаем transition: если в сцене уже настроена подсветка кнопки, она должна сохраниться.
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => _onSelected?.Invoke(suspect));
     }
