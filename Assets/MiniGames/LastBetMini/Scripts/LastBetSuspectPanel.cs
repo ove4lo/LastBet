@@ -2,10 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Панель выбора версии. Это не проверка ответа, а фиксация того,
-/// как игрок интерпретировал собранные сведения.
-/// </summary>
+// Панель выбора версии. Это не проверка ответа, а фиксация того, как игрок интерпретировал собранные сведения
 public sealed class LastBetSuspectPanel : MonoBehaviour
 {
     [SerializeField] private GameObject panelRoot;

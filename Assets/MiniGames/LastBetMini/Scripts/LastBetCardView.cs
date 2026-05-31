@@ -4,18 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// Визуальное представление карты на столе.
-///
-/// ВАЖНО:
-/// карта находится внутри LayoutGroup, поэтому hover не меняет sibling index
-/// и не двигает корневой RectTransform. Иначе HorizontalLayoutGroup начинает
-/// пересчитывать порядок/позиции карт, и на столе возникает ощущение,
-/// что карты "перемешиваются".
-///
-/// Для эффекта увеличения масштабируется только visualRoot.
-/// Если visualRoot не назначен, масштабируется сам объект, но без смены sibling.
-/// </summary>
+// Визуальное представление карты на столе
 public class LastBetCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Images")]

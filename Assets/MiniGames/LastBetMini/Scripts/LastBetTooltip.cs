@@ -1,11 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-/// <summary>
-/// Общий tooltip для панели улик. Объект должен лежать прямо в Canvas,
-/// а не внутри ScrollView, иначе его будет резать Mask.
-/// Позиция: нижний правый угол tooltip привязывается к верхнему правому углу иконки улики.
-/// </summary>
+// Общий tooltip для панели улик
 public sealed class LastBetTooltip : MonoBehaviour
 {
     [Header("Root")]

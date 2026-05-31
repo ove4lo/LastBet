@@ -3,11 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Вступительная панель перед мини-игрой.
-/// Это не техническая справка, а атмосферный ввод: игрок понимает цель,
-/// но скрытые механики и токены остаются за кадром.
-/// </summary>
+// Вступительная панель перед мини-игрой
 public sealed class LastBetRulesPanel : MonoBehaviour
 {
     [SerializeField] private GameObject panelRoot;

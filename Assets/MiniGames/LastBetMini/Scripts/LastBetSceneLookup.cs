@@ -2,10 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Временный автопоиск объектов сцены по именам.
-/// Удобен для восстановления сцены после рефакторинга, но в финальной версии лучше привязать ссылки через Inspector.
-/// </summary>
+// Временный автопоиск объектов сцены по именам
 public static class LastBetSceneLookup
 {
     public static GameObject FindObject(string name)

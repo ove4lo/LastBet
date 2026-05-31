@@ -4,10 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-/// <summary>
-/// Компактная запись улики в хранилище: иконка + название.
-/// Полное описание не занимает место в списке, а показывается в tooltip при наведении.
-/// </summary>
+// Компактная запись улики в хранилище: иконка + название
 public sealed class LastBetClueSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("UI")]
@@ -29,7 +26,6 @@ public sealed class LastBetClueSlotView : MonoBehaviour, IPointerEnterHandler, I
 
     private void Awake()
     {
-        // FIX: убеждаемся что поле canvasGroup заполнено до любых вызовов SetUnstable
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
@@ -74,8 +70,6 @@ public sealed class LastBetClueSlotView : MonoBehaviour, IPointerEnterHandler, I
 
     public void SetUnstable(bool unstable)
     {
-        // FIX: убрана локальная переменная canvasGroup, которая затеняла поле класса.
-        // Теперь используется поле напрямую — оно гарантированно заполнено в Awake.
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
@@ -85,7 +79,6 @@ public sealed class LastBetClueSlotView : MonoBehaviour, IPointerEnterHandler, I
         canvasGroup.interactable = !unstable;
         canvasGroup.blocksRaycasts = !unstable;
 
-        // Опциональная визуальная метка (если есть в префабе)
         if (unstableMark != null)
             unstableMark.SetActive(unstable);
     }
