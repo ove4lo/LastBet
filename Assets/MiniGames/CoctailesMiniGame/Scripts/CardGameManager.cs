@@ -173,24 +173,23 @@ public class CardGameManager : MonoBehaviour
 
         _currentRound++;
 
+        // Между гостями очищаем только стол: выбранные карты уже ушли в сброс.
+        // Руку не пересоздаём полностью, а добираем до cardsToDeal.
         ClearSlots();
-        ClearHand();
+        RefillHandToTarget();
 
-        List<CardData> drawnCards = _deck.Draw(cardsToDeal);
+        List<CardData> availableHandCards = GetCurrentHandCards();
 
-        if (drawnCards == null || drawnCards.Count == 0)
+        if (availableHandCards.Count == 0)
         {
             EndGame(false, "Карты закончились.");
             return;
         }
 
-        _currentCustomer = GenerateCustomer(drawnCards);
+        _currentCustomer = GenerateCustomer(availableHandCards);
 
         if (customerView != null)
             customerView.Show(_currentCustomer.PortraitSprite, _currentCustomer.RequestText);
-
-        foreach (CardData card in drawnCards)
-            SpawnCardInHand(card);
     }
 
     private RuntimeCustomer GenerateCustomer(List<CardData> drawnCards)
@@ -261,6 +260,8 @@ public class CardGameManager : MonoBehaviour
             if (card.cocktailType == type)
                 return true;
 
+            // Карта с эффектом AnyTypeForAdjacency визуально работает как универсальная добавка.
+            // Для заказа её тоже считаем допустимой, чтобы раунд не становился невозможным.
             if (card.effectType == CardEffectType.AnyTypeForAdjacency && IsRecipeType(type))
                 return true;
         }
@@ -371,6 +372,8 @@ public class CardGameManager : MonoBehaviour
 
         if (requestKey == _lastRequestKey)
         {
+            // Не меняем правило на случайное следующее: оно может стать невозможным для текущей руки.
+            // Достаточно заново выбрать формулировку той же выполнимой просьбы.
             baseLine = PickRequiredLine(customer.RequiredType);
             addition = PickRuleLine(customer.RuleType, preferred);
             requestKey = customer.RequiredType + "_" + customer.RuleType + "_" + addition;
@@ -430,6 +433,35 @@ public class CardGameManager : MonoBehaviour
             return "";
 
         return values[Random.Range(0, values.Length)];
+    }
+
+    private void RefillHandToTarget()
+    {
+        int missingCards = cardsToDeal - _handViews.Count;
+
+        if (missingCards <= 0)
+            return;
+
+        List<CardData> drawnCards = _deck.Draw(missingCards);
+
+        if (drawnCards == null || drawnCards.Count == 0)
+            return;
+
+        foreach (CardData card in drawnCards)
+            SpawnCardInHand(card);
+    }
+
+    private List<CardData> GetCurrentHandCards()
+    {
+        var cards = new List<CardData>();
+
+        foreach (CardView view in _handViews)
+        {
+            if (view != null && view.Data != null)
+                cards.Add(view.Data);
+        }
+
+        return cards;
     }
 
     private void SpawnCardInHand(CardData card)
@@ -525,7 +557,7 @@ public class CardGameManager : MonoBehaviour
 
         Debug.Log(
             $"[CocktailScore] Round={_currentRound}, Request={TypeName(_currentCustomer.RequiredType)}, " +
-            $"Cards={DescribeCards(cards)}, Score={result.Score}, " +
+            $"Cards={DescribeCards(cards)}, HandLeft={_handViews.Count}, Score={result.Score}, " +
             $"Failed={result.IsFailed}, Fatal={result.IsFatal}, Reason={result.Reason}"
         );
 

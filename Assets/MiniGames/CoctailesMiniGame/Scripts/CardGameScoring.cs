@@ -172,6 +172,8 @@ public static class CardGameScoring
             if (EffectiveType(cards, i) == type)
                 return true;
 
+            // Универсальная карта раньше учитывалась только для бонусов соседства.
+            // Из-за этого игрок мог видеть подходящую карту, но проверка заказа всё равно проваливалась.
             if (card.effectType == CardEffectType.AnyTypeForAdjacency && IsRecipeType(type))
                 return true;
         }

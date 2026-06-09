@@ -1,11 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
-using DG.Tweening;
 
 public class CardSlot : MonoBehaviour
 {
     public Image slotFrame;
-    public Vector2 placedCardSize = new Vector2(200f, 270f);
+    public Vector2 placedCardSize = new Vector2(150f, 220f);
 
     public CardData PlacedCard { get; private set; }
     public bool HasCard => PlacedCard != null;
@@ -24,19 +23,25 @@ public class CardSlot : MonoBehaviour
         cardView.KillTweens();
 
         RectTransform rt = cardView.transform as RectTransform;
-        RectTransform slotRt = transform as RectTransform;
-
-        if (rt == null || slotRt == null)
+        if (rt == null)
             return;
 
+        LayoutElement layout = cardView.GetComponent<LayoutElement>();
+        if (layout != null)
+            layout.ignoreLayout = true;
+
         rt.SetParent(transform, false);
-        rt.anchorMin = new Vector2(0, 0);
-        rt.anchorMax = new Vector2(1, 1);
+
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
+
         rt.anchoredPosition = Vector2.zero;
         rt.localRotation = Quaternion.identity;
         rt.localScale = Vector3.one;
-        rt.sizeDelta = Vector2.zero; 
+        rt.sizeDelta = placedCardSize;
+
+        rt.SetAsLastSibling();
     }
 
     public void Clear()
