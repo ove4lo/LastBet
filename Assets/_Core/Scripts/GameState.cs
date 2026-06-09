@@ -3,97 +3,245 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GameState", menuName = "Game/GameState")]
 public class GameState : ScriptableObject
 {
-    // ЖЕТОНЫ (скрытые от игрока счётчики)
-    // Накапливаются за каждый выбор в диалогах и мини-играх
-
     [Header("Жетоны (скрытые от игрока)")]
-    [Tooltip("Бунт — за сопротивление и дерзкие выборы")]
+    [Tooltip("Бунт — сопротивление контролю")]
     public int revolt;
 
-    [Tooltip("Послушание — за подчинение и согласие")]
+    [Tooltip("Послушание — принятие контроля")]
     public int obedience;
 
-    [Tooltip("Анализ — за молчание и наблюдение")]
+    [Tooltip("Анализ — внимательность и понимание манипуляции")]
     public int analysis;
 
-    // ПРОГРЕСС
     [Header("Прогресс прохождения")]
-    [Tooltip("Индекс текущей сцены в массиве sceneOrder[] в GameManager")]
     public int currentSceneIndex;
-
-    [Tooltip("Имя сцены для возврата после мини-игры")]
     public string returnSceneName;
-
-    [Tooltip("Тип запущенной мини-игры — чтобы знать какой жетон давать")]
     public MiniGameType currentMiniGame;
 
-    // ПОСТОЯННЫЕ ЭФФЕКТЫ
-    // Коктейль из сценария: первое питьё → +1 Послушание.
-    // Каждое следующее → +1 Послушание +1 Анализ.
-    // Эффект влияет на всю игру: реплики Эвелин становятся злее,
-    // мини-игры сложнее (реализуем через cocktailDrunk в логике сцен)
-
-    [Header("Постоянные эффекты (из сценария)")]
-    [Tooltip("Выпила ли Эвелин коктейль хоть раз — влияет на реплики и сложность")]
+    [Header("Гримёрка / коктейль")]
     public bool cocktailDrunk;
-
-    [Tooltip("Сколько раз выпила коктейль — больше 1 даёт двойной штраф")]
+    public bool cocktailInspected;
     public int cocktailCount;
 
-    // МЕТОДЫ — ЖЕТОНЫ
+    [Header("Бар Лео / мини-игра Коктейли")]
+    public bool barMiniGameWon;
+    public bool officeKeyObtained;
+    public bool midnightPlanKnown;
 
-    /// Добавить жетон
+    [Header("Джекпот — скрытые последствия")]
+    public bool jackpotCompleted;
+    public string jackpotOutcome;
+    public string jackpotRiskLevel;
+    public int jackpotRiskScore;
+    public int jackpotDebt;
+    public int jackpotReward;
+    public int jackpotSpinCount;
+    public bool jackpotStoppedByPlayer;
+    public bool jackpotSawHairpin;
+    public bool jackpotSawDebt;
+    public string leoRelationAfterJackpot;
+
+    [Header("Кабинет Виктора / Джокер")]
+    public bool jokerWon;
+    public bool truthAvailable;
+
+    [Header("Финальная мини-игра")]
+    public bool finalBetWon;
+
     public void AddToken(TokenType type, int amount = 1)
     {
         switch (type)
         {
-            case TokenType.Revolt: revolt += amount; break;
-            case TokenType.Obedience: obedience += amount; break;
-            case TokenType.Analysis: analysis  += amount; break;
+            case TokenType.Revolt:
+                revolt += amount;
+                break;
+
+            case TokenType.Obedience:
+                obedience += amount;
+                break;
+
+            case TokenType.Analysis:
+                analysis += amount;
+                break;
         }
-        // Лог виден в Console — удобно для отладки
+
         Debug.Log($"[Жетон] +{amount} {type} | Итого → Бунт:{revolt} Послушание:{obedience} Анализ:{analysis}");
     }
 
-    /// Определить концовку по накопленным жетонам
     public EndingType GetEnding()
     {
-        if (revolt > obedience && revolt > analysis) return EndingType.Freedom;
-        if (obedience > revolt && obedience > analysis) return EndingType.Submission;
+        if (revolt > obedience && revolt > analysis)
+            return EndingType.Freedom;
+
+        if (obedience > revolt && obedience > analysis)
+            return EndingType.Submission;
+
         return EndingType.Death;
     }
 
-    // МЕТОДЫ — КОКТЕЙЛЬ
-
-    // Вызывать когда Эвелин выпила коктейль
     public void DrinkCocktail()
     {
         cocktailDrunk = true;
         cocktailCount++;
         AddToken(TokenType.Obedience);
-        if (cocktailCount > 1) AddToken(TokenType.Analysis);
-        Debug.Log($"[Коктейль] Выпит раз: {cocktailCount}");
+        Debug.Log($"[Коктейль] Выпит раз: {cocktailCount} → +1 Послушание");
     }
 
-    // Вызывать когда Эвелин отказалась от коктейля.
     public void RefuseCocktail()
     {
         AddToken(TokenType.Revolt);
         Debug.Log("[Коктейль] Отказ → +1 Бунт");
     }
 
-    // СБРОС
+    public void InspectCocktail()
+    {
+        cocktailInspected = true;
+        AddToken(TokenType.Analysis);
+        Debug.Log("[Коктейль] Осмотрен → +1 Анализ");
+    }
 
-    // Полный сброс — вызывается при старте новой игры
+    public void ApplyBarMiniGameResult(bool won)
+    {
+        barMiniGameWon = won;
+        officeKeyObtained = true;
+
+        if (won)
+        {
+            midnightPlanKnown = true;
+            AddToken(TokenType.Analysis);
+            Debug.Log("[Бар Лео] Победа → +1 Анализ, ключ получен, план полуночи известен");
+        }
+        else
+        {
+            midnightPlanKnown = false;
+            AddToken(TokenType.Obedience);
+            Debug.Log("[Бар Лео] Провал → +1 Послушание, ключ всё равно получен");
+        }
+    }
+
+    public void ApplyJackpotResult(
+        string outcome,
+        string token,
+        string leoRelationState,
+        string riskLevel,
+        int spinCount,
+        int reward,
+        int debt,
+        int riskScore,
+        bool stoppedByPlayer,
+        bool sawHairpin,
+        bool sawDebt)
+    {
+        jackpotCompleted = true;
+        jackpotOutcome = outcome;
+        leoRelationAfterJackpot = leoRelationState;
+        jackpotRiskLevel = riskLevel;
+        jackpotSpinCount = spinCount;
+        jackpotReward = reward;
+        jackpotDebt = debt;
+        jackpotRiskScore = riskScore;
+        jackpotStoppedByPlayer = stoppedByPlayer;
+        jackpotSawHairpin = sawHairpin;
+        jackpotSawDebt = sawDebt;
+
+        AddToken(ParseToken(token));
+
+        Debug.Log(
+            $"[Джекпот] Итог={outcome} | Токен={token} | " +
+            $"Лео далее={leoRelationState} | Риск={riskLevel}/{riskScore} | " +
+            $"Долг={debt} | Прокруты={spinCount} | Заколка={sawHairpin}"
+        );
+    }
+
+    public void ApplyJokerResult(bool won)
+    {
+        jokerWon = won;
+
+        if (won)
+        {
+            truthAvailable = true;
+            AddToken(TokenType.Analysis);
+            Debug.Log("[Джокер] Победа → +1 Анализ, правда доступна");
+        }
+        else
+        {
+            Debug.Log("[Джокер] Провал → без жетона, искажение усиливается визуально");
+        }
+    }
+
+    public void ApplyFinalBetResult(bool won)
+    {
+        finalBetWon = won;
+
+        if (won)
+        {
+            AddToken(TokenType.Analysis);
+            Debug.Log("[Последняя ставка] Победа → +1 Анализ");
+        }
+        else
+        {
+            AddToken(TokenType.Obedience);
+            Debug.Log("[Последняя ставка] Провал → +1 Послушание");
+        }
+    }
+
+    private TokenType ParseToken(string token)
+    {
+        switch (token)
+        {
+            case "Revolt":
+                return TokenType.Revolt;
+
+            case "Obedience":
+                return TokenType.Obedience;
+
+            case "Analysis":
+                return TokenType.Analysis;
+
+            default:
+                Debug.LogWarning($"[GameState] Неизвестный токен '{token}', будет использован Analysis.");
+                return TokenType.Analysis;
+        }
+    }
+
+    private void ResetJackpot()
+    {
+        jackpotCompleted = false;
+        jackpotOutcome = "";
+        jackpotRiskLevel = "";
+        jackpotRiskScore = 0;
+        jackpotDebt = 0;
+        jackpotReward = 0;
+        jackpotSpinCount = 0;
+        jackpotStoppedByPlayer = false;
+        jackpotSawHairpin = false;
+        jackpotSawDebt = false;
+        leoRelationAfterJackpot = "";
+    }
+
     public void ResetAll()
     {
         revolt = 0;
         obedience = 0;
         analysis = 0;
+
         currentSceneIndex = 0;
         returnSceneName = "";
+        currentMiniGame = MiniGameType.CardGame;
+
         cocktailDrunk = false;
+        cocktailInspected = false;
         cocktailCount = 0;
+
+        barMiniGameWon = false;
+        officeKeyObtained = false;
+        midnightPlanKnown = false;
+
+        jokerWon = false;
+        truthAvailable = false;
+        finalBetWon = false;
+
+        ResetJackpot();
         Debug.Log("[GameState] Сброс выполнен");
     }
 }

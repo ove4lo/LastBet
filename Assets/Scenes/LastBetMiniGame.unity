@@ -627,9 +627,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LastBetSuspectPanel
   panelRoot: {fileID: 1896914256}
-  helgaChoice: {fileID: 0}
-  victorChoice: {fileID: 0}
-  marieChoice: {fileID: 0}
+  helgaChoice: {fileID: 941970803}
+  victorChoice: {fileID: 1852109600}
+  marieChoice: {fileID: 2021761797}
 --- !u!1 &193608696
 GameObject:
   m_ObjectHideFlags: 0

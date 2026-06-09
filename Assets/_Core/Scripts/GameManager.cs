@@ -1,35 +1,29 @@
-// Главный менеджер игры
-
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header(" Данные игры ")]
+    [Header("Данные игры")]
     public GameState gameState;
 
-    [Header(" Порядок игровых сцен ")]
+    [Header("Порядок игровых сцен")]
     public string[] sceneOrder =
     {
-        "Scene1_Cabaret", // 0 — Выступление
-        "Scene2_Dressing", // 1 — Гримёрная (коктейль, дверь, автомат)
-        "Scene3_Bar",  // 2 — Бар (встреча с Лео)
-        "Scene4_Casino", // 3 — Казино
-        "Scene5_Backstage", // 4 — Закулисье
-        "Scene6_Office", // 5 — Кабинет Виктора
-        "Scene7_FinalStake" // 6 — Финальная ставка
+        "Scene1_Cabaret",
+        "Scene2_Dressing",
+        "Scene3_Bar",
+        "Scene4_Casino",
+        "Scene5_Backstage",
+        "Scene6_Office",
+        "Scene7_FinalStake"
     };
 
-    // Текущее состояние игры — влияет на то, что можно делать
     public GameplayState CurrentState { get; private set; } = GameplayState.MainMenu;
-
-    // ИНИЦИАЛИЗАЦИЯ
 
     private void Awake()
     {
-        Debug.Log($"[GameManager] Awake | name={name} | scene={gameObject.scene.name} | active={gameObject.activeInHierarchy}", this);
+        Debug.Log($"[GameManager] Awake | name={name} | scene={gameObject.scene.name}", this);
 
         if (Instance != null && Instance != this)
         {
@@ -44,8 +38,12 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log($"[GameManager] Start | Instance={Instance}", this);
-        
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
         if (SaveSystem.HasSave())
         {
             SaveSystem.Load(gameState);
@@ -55,143 +53,228 @@ public class GameManager : MonoBehaviour
         {
             gameState.ResetAll();
         }
-        
+
         SceneTransition.Instance.FadeToScene("MainMenu");
     }
-    
+
     private void OnDestroy()
     {
         Debug.LogWarning($"[GameManager] OnDestroy | name={name} | scene={gameObject.scene.name}", this);
     }
 
-    // ЗАПУСК/ПРОДОЛЖЕНИЕ ИГРЫ
-
-    // Новая игра — сбросить всё и начать с первой сцены
     public void StartNewGame()
     {
+        if (gameState == null)
+            return;
+
         gameState.ResetAll();
         SaveSystem.Delete();
         LoadSceneByIndex(0);
     }
 
-    // Продолжить — загрузить сцену из сохранения
     public void ContinueGame()
     {
+        if (gameState == null)
+            return;
+
         LoadSceneByIndex(gameState.currentSceneIndex);
     }
 
-    // НАВИГАЦИЯ ПО СЦЕНАМ
-
-    // Перейти к следующей сцене по порядку
     public void LoadNextScene()
     {
+        if (gameState == null)
+            return;
+
         LoadSceneByIndex(gameState.currentSceneIndex + 1);
     }
 
-    // Автоматически сохраняет прогресс
     public void LoadSceneByIndex(int index)
     {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
         if (index >= sceneOrder.Length)
         {
             LoadEnding();
             return;
         }
+
         gameState.currentSceneIndex = index;
-        SaveSystem.Save(gameState); // автосохранение
+        SaveSystem.Save(gameState);
         SetState(GameplayState.Playing);
         SceneTransition.Instance.FadeToScene(sceneOrder[index]);
     }
 
-    // Вернуться на главное меню (из паузы или концовки)
     public void ReturnToMainMenu()
     {
-        Time.timeScale = 1f; // снять паузу на всякий случай
+        Time.timeScale = 1f;
         SetState(GameplayState.MainMenu);
         SceneTransition.Instance.FadeToScene("MainMenu");
     }
 
-    // МИНИ-ИГРЫ
-
-    // Запустить мини-игру
-    // Запоминает из какой сцены ушли, чтобы вернуться
     public void LoadMiniGame(string miniGameSceneName, MiniGameType miniGameType)
     {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
         gameState.returnSceneName = sceneOrder[gameState.currentSceneIndex];
         gameState.currentMiniGame = miniGameType;
+
         SetState(GameplayState.MiniGame);
         SceneTransition.Instance.FadeToScene(miniGameSceneName);
     }
 
-    // Завершить мини-игру и вернуться в сцену
+    public void FinishBarMiniGame(bool won)
+    {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
+        gameState.ApplyBarMiniGameResult(won);
+        ReturnFromMiniGame();
+    }
+
     public void FinishMiniGame(bool won)
     {
-        if (won)
+        if (gameState == null)
         {
-            gameState.AddToken(TokenType.Revolt);
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
         }
-        else
+
+        switch (gameState.currentMiniGame)
         {
-            // Разные жетоны при поражении для разных мини-игр
-            switch (gameState.currentMiniGame)
-            {
-                case MiniGameType.CardGame:
-                    gameState.AddToken(TokenType.Obedience); break;
-                case MiniGameType.Roulette:
-                    gameState.AddToken(TokenType.Analysis); break;
-            }
+            case MiniGameType.CardGame:
+                gameState.ApplyBarMiniGameResult(won);
+                break;
+
+            case MiniGameType.Roulette:
+                gameState.AddToken(won ? TokenType.Analysis : TokenType.Obedience);
+                break;
+
+            default:
+                Debug.LogWarning($"[GameManager] Неизвестная мини-игра: {gameState.currentMiniGame}");
+                break;
         }
-        SaveSystem.Save(gameState);
-        SetState(GameplayState.Playing);
-        SceneTransition.Instance.FadeToScene(gameState.returnSceneName);
+
+        ReturnFromMiniGame();
     }
 
     public void FinishMiniGame(bool won, TokenType token)
     {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
         gameState.AddToken(token);
+        ReturnFromMiniGame();
+    }
+
+    public void FinishJackpotMiniGame(
+        string outcome,
+        string token,
+        string leoRelationState,
+        string riskLevel,
+        int spinCount,
+        int reward,
+        int debt,
+        int riskScore,
+        bool stoppedByPlayer,
+        bool sawHairpin,
+        bool sawDebt)
+    {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
+        gameState.ApplyJackpotResult(
+            outcome,
+            token,
+            leoRelationState,
+            riskLevel,
+            spinCount,
+            reward,
+            debt,
+            riskScore,
+            stoppedByPlayer,
+            sawHairpin,
+            sawDebt
+        );
+
+        ReturnFromMiniGame();
+    }
+
+    private void ReturnFromMiniGame()
+    {
         SaveSystem.Save(gameState);
         SetState(GameplayState.Playing);
+
+        if (string.IsNullOrEmpty(gameState.returnSceneName))
+        {
+            Debug.LogWarning("[GameManager] returnSceneName пустой, загружается текущая сюжетная сцена");
+            SceneTransition.Instance.FadeToScene(sceneOrder[gameState.currentSceneIndex]);
+            return;
+        }
+
         SceneTransition.Instance.FadeToScene(gameState.returnSceneName);
     }
 
-    // КОНЦОВКИ
-
-    // Загрузить концовку по накопленным жетонам
     public void LoadEnding()
     {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
         SetState(GameplayState.Ending);
-        SaveSystem.Delete(); // после концовки сохранение сбрасываем
+        SaveSystem.Delete();
+
         string endingScene = gameState.GetEnding().ToString();
         Debug.Log($"[GameManager] Концовка: {endingScene} (Б:{gameState.revolt} П:{gameState.obedience} А:{gameState.analysis})");
         SceneTransition.Instance.FadeToScene(endingScene);
     }
 
-    // ПАУЗА
-
-    // Поставить паузу
     public void Pause()
     {
-        if (CurrentState != GameplayState.Playing &&
-            CurrentState != GameplayState.Dialogue) return;
+        if (CurrentState != GameplayState.Playing && CurrentState != GameplayState.Dialogue)
+            return;
+
         SetState(GameplayState.Paused);
         Time.timeScale = 0f;
     }
 
-    // Снять паузу
     public void Resume()
     {
-        if (CurrentState != GameplayState.Paused) return;
+        if (CurrentState != GameplayState.Paused)
+            return;
+
         SetState(GameplayState.Playing);
         Time.timeScale = 1f;
     }
 
-    // ДИАЛОГ
+    public void OnDialogueStart()
+    {
+        SetState(GameplayState.Dialogue);
+    }
 
-    public void OnDialogueStart() => SetState(GameplayState.Dialogue);
+    public void OnDialogueEnd()
+    {
+        SetState(GameplayState.Playing);
+    }
 
-    // Вызывать когда диалог Yarn Spinner завершился
-    public void OnDialogueEnd() => SetState(GameplayState.Playing);
-
-    // Удобные проверки
     public bool IsPlaying => CurrentState == GameplayState.Playing;
     public bool IsPaused => CurrentState == GameplayState.Paused;
     public bool IsInDialogue => CurrentState == GameplayState.Dialogue;
