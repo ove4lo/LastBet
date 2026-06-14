@@ -131,6 +131,22 @@ public class GameState : ScriptableObject
     [Tooltip("Правда доступна для финальной реплики")]
     public bool truthAvailable;
 
+    // =========================================================
+    // ПОСЛЕДНЯЯ СТАВКА
+    // =========================================================
+
+    [Header("Последняя ставка")]
+    [Tooltip("Мини-игра завершена")]
+    public bool lastBetCompleted;
+
+    [Tooltip("Эвелин выдержала давление и сделала осознанный выбор")]
+    public bool lastBetWon;
+
+    [Tooltip("Выбранное направление")]
+    public string lastBetChoice;
+
+    [Tooltip("Уровень давления Джокера")]
+    public int lastBetPressureScore;
 
     // =========================================================
     // МЕТОДЫ — ЖЕТОНЫ
@@ -308,8 +324,17 @@ public class GameState : ScriptableObject
         ResetBarMiniGame();
         ResetJackpot();
         ResetJoker();
+        ResetLastBet();
 
         Debug.Log("[GameState] Сброс выполнен");
+    }
+
+    private void ResetLastBet()
+    {
+        lastBetCompleted = false;
+        lastBetWon = false;
+        lastBetChoice = "";
+        lastBetPressureScore = 0;
     }
 
     private void ResetTokens()
@@ -372,5 +397,35 @@ public class GameState : ScriptableObject
         jokerCompleted = false;
         jokerWon = false;
         truthAvailable = false;
+    }
+
+    public void ApplyLastBetResult(bool won, string choice, int pressureScore)
+    {
+        lastBetCompleted = true;
+        lastBetWon = won;
+        lastBetChoice = choice;
+        lastBetPressureScore = pressureScore;
+
+        switch (choice)
+        {
+            case "Freedom":
+                AddToken(TokenType.Revolt, 2);
+                break;
+
+            case "Cage":
+                AddToken(TokenType.Obedience, 2);
+                break;
+
+            case "Truth":
+                AddToken(TokenType.Analysis, 2);
+                break;
+        }
+
+        if (won)
+        {
+            AddToken(TokenType.Analysis, 1);
+        }
+
+        Debug.Log($"[Последняя ставка] Won={won}, Choice={choice}, Pressure={pressureScore}");
     }
 }

@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/CoctailesMiniGame.unity
     guid: 6584751df12edd745a80722413b729a8
   - enabled: 1
+    path: Assets/Scenes/JokerMiniGame.unity
+    guid: 5588dbee7e5bc3f459b72cb1a1e113b6
+  - enabled: 1
     path: Assets/Scenes/LastBetMiniGame.unity
     guid: ac4ebcf187cadd441b1887c0d9ea02a8
   - enabled: 1

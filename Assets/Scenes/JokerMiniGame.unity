@@ -413,8 +413,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: -799.99994, y: 160}
+  m_AnchoredPosition: {x: 25.000015, y: 100}
+  m_SizeDelta: {x: -850, y: 160}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &181441617
 MonoBehaviour:
@@ -682,8 +682,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 62.5}
-  m_SizeDelta: {x: -1300, y: -235}
+  m_AnchoredPosition: {x: 0, y: 72.5}
+  m_SizeDelta: {x: -1300, y: -255}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &569247816
 CanvasRenderer:
@@ -714,7 +714,7 @@ MonoBehaviour:
   m_StartCorner: 0
   m_StartAxis: 0
   m_CellSize: {x: 185, y: 250}
-  m_Spacing: {x: 35, y: 30}
+  m_Spacing: {x: 25, y: 20}
   m_Constraint: 1
   m_ConstraintCount: 3
 --- !u!1 &652720993
@@ -1069,7 +1069,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfe5b8ebab03f6a4b9e992a937f3f5aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::JokerMemoryGameManager
-  cardPrefab: {fileID: 0}
+  cardPrefab: {fileID: 8495372191267531546, guid: 53a635f8df9d3d941a2e3790ac29f0eb, type: 3}
   cardHolder: {fileID: 569247815}
   cardBack: {fileID: 21300000, guid: 92452b1bb4668514fa63fd9d693f12a2, type: 3}
   pairSprites:

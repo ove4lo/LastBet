@@ -141,44 +141,6 @@ public class GameManager : MonoBehaviour
         gameState.ApplyBarMiniGameResult(won);
         ReturnFromMiniGame();
     }
-
-    public void FinishMiniGame(bool won)
-    {
-        if (gameState == null)
-        {
-            Debug.LogError("[GameManager] GameState не назначен", this);
-            return;
-        }
-
-        switch (gameState.currentMiniGame)
-        {
-            case MiniGameType.CardGame:
-                gameState.ApplyBarMiniGameResult(won);
-                break;
-
-            case MiniGameType.Roulette:
-                gameState.AddToken(won ? TokenType.Analysis : TokenType.Obedience);
-                break;
-
-            default:
-                Debug.LogWarning($"[GameManager] Неизвестная мини-игра: {gameState.currentMiniGame}");
-                break;
-        }
-
-        ReturnFromMiniGame();
-    }
-
-    public void FinishMiniGame(bool won, TokenType token)
-    {
-        if (gameState == null)
-        {
-            Debug.LogError("[GameManager] GameState не назначен", this);
-            return;
-        }
-
-        gameState.AddToken(token);
-        ReturnFromMiniGame();
-    }
     
     public void FinishJackpotMiniGame(JackpotFinalResult result)
     {
@@ -202,6 +164,26 @@ public class GameManager : MonoBehaviour
 
         gameState.ApplyJokerResult(won);
         Debug.Log($"[GameManager] Джокер завершён. Won={won}");
+        ReturnFromMiniGame();
+    }
+
+    public void FinishLastBetMiniGame(
+        bool won,
+        string choice,
+        int pressureScore)
+    {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
+        gameState.ApplyLastBetResult(won, choice, pressureScore);
+
+        Debug.Log(
+            $"[GameManager] Последняя ставка завершена. " +
+            $"Won={won}, Choice={choice}");
+
         ReturnFromMiniGame();
     }
 
