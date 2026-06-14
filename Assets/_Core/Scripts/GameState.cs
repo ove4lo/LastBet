@@ -3,53 +3,129 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "GameState", menuName = "Game/GameState")]
 public class GameState : ScriptableObject
 {
+    // =========================================================
+    // ЖЕТОНЫ
+    // =========================================================
+
     [Header("Жетоны (скрытые от игрока)")]
-    [Tooltip("Бунт — сопротивление контролю")]
+    [Tooltip("Бунт — за сопротивление и дерзкие выборы")]
     public int revolt;
 
-    [Tooltip("Послушание — принятие контроля")]
+    [Tooltip("Послушание — за подчинение и согласие")]
     public int obedience;
 
-    [Tooltip("Анализ — внимательность и понимание манипуляции")]
+    [Tooltip("Анализ — за наблюдение, внимательность и понимание ситуации")]
     public int analysis;
 
+
+    // =========================================================
+    // ПРОГРЕСС
+    // =========================================================
+
     [Header("Прогресс прохождения")]
+    [Tooltip("Индекс текущей сцены в массиве sceneOrder[] в GameManager")]
     public int currentSceneIndex;
+
+    [Tooltip("Имя сцены для возврата после мини-игры")]
     public string returnSceneName;
+
+    [Tooltip("Тип запущенной мини-игры")]
     public MiniGameType currentMiniGame;
 
-    [Header("Гримёрка / коктейль")]
+
+    // =========================================================
+    // СЦЕНА С КОКТЕЙЛЕМ В ГРИМЁРКЕ
+    // =========================================================
+
+    [Header("Коктейль в гримёрке")]
+    [Tooltip("Выпила ли Эвелин коктейль хоть раз")]
     public bool cocktailDrunk;
-    public bool cocktailInspected;
+
+    [Tooltip("Сколько раз Эвелин выпила коктейль")]
     public int cocktailCount;
 
-    [Header("Бар Лео / мини-игра Коктейли")]
+    [Tooltip("Осмотрела ли Эвелин коктейль")]
+    public bool cocktailInspected;
+
+
+    // =========================================================
+    // МИНИ-ИГРА КОКТЕЙЛИ У ЛЕО
+    // =========================================================
+
+    [Header("Коктейли у Лео")]
+    [Tooltip("Мини-игра коктейлей завершена")]
+    public bool barMiniGameCompleted;
+
+    [Tooltip("Мини-игра коктейлей выиграна")]
     public bool barMiniGameWon;
-    public bool officeKeyObtained;
+
+    [Tooltip("План полуночи известен")]
     public bool midnightPlanKnown;
 
-    [Header("Джекпот — скрытые последствия")]
+    [Tooltip("Ключ от кабинета Виктора получен")]
+    public bool officeKeyObtained;
+
+    [Tooltip("Искажение восприятия усилено")]
+    public bool distortionIncreased;
+
+
+    // =========================================================
+    // ДЖЕКПОТ / СТАРЫЙ АВТОМАТ
+    // =========================================================
+
+    [Header("Джекпот / Старый автомат")]
+    [Tooltip("Мини-игра Джекпот завершена")]
     public bool jackpotCompleted;
-    public string jackpotOutcome;
-    public string jackpotRiskLevel;
-    public int jackpotRiskScore;
-    public int jackpotDebt;
-    public int jackpotReward;
+
+    [Tooltip("Игрок отказался играть")]
+    public bool jackpotRefused;
+
+    [Tooltip("Итог мини-игры по новой модели")]
+    public JackpotOutcome jackpotOutcome;
+
+    [Tooltip("Основной скрытый стиль результата")]
+    public JackpotBehaviourToken jackpotToken;
+
+    [Tooltip("Левый символ итоговой комбинации")]
+    public JackpotSymbolType jackpotLeftSymbol;
+
+    [Tooltip("Центральный символ итоговой комбинации")]
+    public JackpotSymbolType jackpotCenterSymbol;
+
+    [Tooltip("Правый символ итоговой комбинации")]
+    public JackpotSymbolType jackpotRightSymbol;
+
+    [Tooltip("Сколько Бунта начислил джекпот")]
+    public int jackpotRevoltDelta;
+
+    [Tooltip("Сколько Послушания начислил джекпот")]
+    public int jackpotObedienceDelta;
+
+    [Tooltip("Сколько Анализа начислил джекпот")]
+    public int jackpotAnalysisDelta;
+
+    [Tooltip("Количество сделанных прокруток")]
     public int jackpotSpinCount;
-    public bool jackpotStoppedByPlayer;
-    public bool jackpotSawHairpin;
-    public bool jackpotSawDebt;
-    public string leoRelationAfterJackpot;
 
-    [Header("Кабинет Виктора / Джокер")]
-    public bool jokerWon;
-    public bool truthAvailable;
+    [Tooltip("Выпал ли джекпот")]
+    public bool jackpotIsJackpot;
 
-    [Header("Финальная мини-игра")]
-    public bool finalBetWon;
+    [Tooltip("Получена ли карта Джокера из автомата")]
+    public bool jokerCardObtained;
+
+    [Tooltip("Использована ли карта Джокера позже")]
+    public bool jokerCardUsed;
+
+
+    // =========================================================
+    // МЕТОДЫ — ЖЕТОНЫ
+    // =========================================================
 
     public void AddToken(TokenType type, int amount = 1)
     {
+        if (amount <= 0)
+            return;
+
         switch (type)
         {
             case TokenType.Revolt:
@@ -79,12 +155,22 @@ public class GameState : ScriptableObject
         return EndingType.Death;
     }
 
+
+    // =========================================================
+    // МЕТОДЫ — КОКТЕЙЛЬ В ГРИМЁРКЕ
+    // =========================================================
+
     public void DrinkCocktail()
     {
         cocktailDrunk = true;
         cocktailCount++;
+
         AddToken(TokenType.Obedience);
-        Debug.Log($"[Коктейль] Выпит раз: {cocktailCount} → +1 Послушание");
+
+        if (cocktailCount > 1)
+            AddToken(TokenType.Analysis);
+
+        Debug.Log($"[Коктейль] Выпит раз: {cocktailCount}");
     }
 
     public void RefuseCocktail()
@@ -100,8 +186,14 @@ public class GameState : ScriptableObject
         Debug.Log("[Коктейль] Осмотрен → +1 Анализ");
     }
 
+
+    // =========================================================
+    // МЕТОДЫ — МИНИ-ИГРА КОКТЕЙЛИ У ЛЕО
+    // =========================================================
+
     public void ApplyBarMiniGameResult(bool won)
     {
+        barMiniGameCompleted = true;
         barMiniGameWon = won;
         officeKeyObtained = true;
 
@@ -109,139 +201,129 @@ public class GameState : ScriptableObject
         {
             midnightPlanKnown = true;
             AddToken(TokenType.Analysis);
-            Debug.Log("[Бар Лео] Победа → +1 Анализ, ключ получен, план полуночи известен");
+            Debug.Log("[Коктейли] Победа → Анализ +1, ключ получен, план полуночи известен");
         }
         else
         {
-            midnightPlanKnown = false;
+            distortionIncreased = true;
             AddToken(TokenType.Obedience);
-            Debug.Log("[Бар Лео] Провал → +1 Послушание, ключ всё равно получен");
+            Debug.Log("[Коктейли] Поражение → Послушание +1, ключ получен, искажение усилено");
         }
     }
 
-    public void ApplyJackpotResult(
-        string outcome,
-        string token,
-        string leoRelationState,
-        string riskLevel,
-        int spinCount,
-        int reward,
-        int debt,
-        int riskScore,
-        bool stoppedByPlayer,
-        bool sawHairpin,
-        bool sawDebt)
-    {
-        jackpotCompleted = true;
-        jackpotOutcome = outcome;
-        leoRelationAfterJackpot = leoRelationState;
-        jackpotRiskLevel = riskLevel;
-        jackpotSpinCount = spinCount;
-        jackpotReward = reward;
-        jackpotDebt = debt;
-        jackpotRiskScore = riskScore;
-        jackpotStoppedByPlayer = stoppedByPlayer;
-        jackpotSawHairpin = sawHairpin;
-        jackpotSawDebt = sawDebt;
 
-        AddToken(ParseToken(token));
+    // =========================================================
+    // МЕТОДЫ — ДЖЕКПОТ / СТАРЫЙ АВТОМАТ
+    // =========================================================
+
+    public void ApplyJackpotResult(JackpotFinalResult result)
+    {
+        if (result == null)
+        {
+            Debug.LogWarning("[Джекпот] Пустой результат не сохранён");
+            return;
+        }
+
+        jackpotCompleted = true;
+        jackpotRefused = result.Refused;
+
+        jackpotOutcome = result.Outcome;
+        jackpotToken = result.Token;
+
+        jackpotLeftSymbol = result.LeftSymbol;
+        jackpotCenterSymbol = result.CenterSymbol;
+        jackpotRightSymbol = result.RightSymbol;
+
+        jackpotRevoltDelta = result.RevoltDelta;
+        jackpotObedienceDelta = result.ObedienceDelta;
+        jackpotAnalysisDelta = result.AnalysisDelta;
+
+        jackpotSpinCount = result.SpinCount;
+        jackpotIsJackpot = result.IsJackpot;
+
+        if (result.JokerCardObtained)
+            jokerCardObtained = true;
+
+        AddToken(TokenType.Revolt, result.RevoltDelta);
+        AddToken(TokenType.Obedience, result.ObedienceDelta);
+        AddToken(TokenType.Analysis, result.AnalysisDelta);
 
         Debug.Log(
-            $"[Джекпот] Итог={outcome} | Токен={token} | " +
-            $"Лео далее={leoRelationState} | Риск={riskLevel}/{riskScore} | " +
-            $"Долг={debt} | Прокруты={spinCount} | Заколка={sawHairpin}"
+            $"[Джекпот] {result.Title} | " +
+            $"Jackpot={result.IsJackpot}, JokerCard={result.JokerCardObtained}, " +
+            $"Spins={result.SpinCount}, R={result.RevoltDelta}, " +
+            $"O={result.ObedienceDelta}, A={result.AnalysisDelta}"
         );
     }
 
-    public void ApplyJokerResult(bool won)
-    {
-        jokerWon = won;
 
-        if (won)
-        {
-            truthAvailable = true;
-            AddToken(TokenType.Analysis);
-            Debug.Log("[Джокер] Победа → +1 Анализ, правда доступна");
-        }
-        else
-        {
-            Debug.Log("[Джокер] Провал → без жетона, искажение усиливается визуально");
-        }
+    // =========================================================
+    // СБРОС
+    // =========================================================
+
+    public void ResetAll()
+    {
+        ResetTokens();
+        ResetProgress();
+        ResetDressingCocktail();
+        ResetBarMiniGame();
+        ResetJackpot();
+
+        Debug.Log("[GameState] Сброс выполнен");
     }
 
-    public void ApplyFinalBetResult(bool won)
+    private void ResetTokens()
     {
-        finalBetWon = won;
-
-        if (won)
-        {
-            AddToken(TokenType.Analysis);
-            Debug.Log("[Последняя ставка] Победа → +1 Анализ");
-        }
-        else
-        {
-            AddToken(TokenType.Obedience);
-            Debug.Log("[Последняя ставка] Провал → +1 Послушание");
-        }
+        revolt = 0;
+        obedience = 0;
+        analysis = 0;
     }
 
-    private TokenType ParseToken(string token)
+    private void ResetProgress()
     {
-        switch (token)
-        {
-            case "Revolt":
-                return TokenType.Revolt;
+        currentSceneIndex = 0;
+        returnSceneName = "";
 
-            case "Obedience":
-                return TokenType.Obedience;
+        // Раскомментируй только если в MiniGameType есть None.
+        // currentMiniGame = MiniGameType.None;
+    }
 
-            case "Analysis":
-                return TokenType.Analysis;
+    private void ResetDressingCocktail()
+    {
+        cocktailDrunk = false;
+        cocktailCount = 0;
+        cocktailInspected = false;
+    }
 
-            default:
-                Debug.LogWarning($"[GameState] Неизвестный токен '{token}', будет использован Analysis.");
-                return TokenType.Analysis;
-        }
+    private void ResetBarMiniGame()
+    {
+        barMiniGameCompleted = false;
+        barMiniGameWon = false;
+        midnightPlanKnown = false;
+        officeKeyObtained = false;
+        distortionIncreased = false;
     }
 
     private void ResetJackpot()
     {
         jackpotCompleted = false;
-        jackpotOutcome = "";
-        jackpotRiskLevel = "";
-        jackpotRiskScore = 0;
-        jackpotDebt = 0;
-        jackpotReward = 0;
+        jackpotRefused = false;
+
+        jackpotOutcome = JackpotOutcome.Refused;
+        jackpotToken = JackpotBehaviourToken.None;
+
+        jackpotLeftSymbol = JackpotSymbolType.Blank;
+        jackpotCenterSymbol = JackpotSymbolType.Blank;
+        jackpotRightSymbol = JackpotSymbolType.Blank;
+
+        jackpotRevoltDelta = 0;
+        jackpotObedienceDelta = 0;
+        jackpotAnalysisDelta = 0;
+
         jackpotSpinCount = 0;
-        jackpotStoppedByPlayer = false;
-        jackpotSawHairpin = false;
-        jackpotSawDebt = false;
-        leoRelationAfterJackpot = "";
-    }
+        jackpotIsJackpot = false;
 
-    public void ResetAll()
-    {
-        revolt = 0;
-        obedience = 0;
-        analysis = 0;
-
-        currentSceneIndex = 0;
-        returnSceneName = "";
-        currentMiniGame = MiniGameType.CardGame;
-
-        cocktailDrunk = false;
-        cocktailInspected = false;
-        cocktailCount = 0;
-
-        barMiniGameWon = false;
-        officeKeyObtained = false;
-        midnightPlanKnown = false;
-
-        jokerWon = false;
-        truthAvailable = false;
-        finalBetWon = false;
-
-        ResetJackpot();
-        Debug.Log("[GameState] Сброс выполнен");
+        jokerCardObtained = false;
+        jokerCardUsed = false;
     }
 }

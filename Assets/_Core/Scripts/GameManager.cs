@@ -179,19 +179,8 @@ public class GameManager : MonoBehaviour
         gameState.AddToken(token);
         ReturnFromMiniGame();
     }
-
-    public void FinishJackpotMiniGame(
-        string outcome,
-        string token,
-        string leoRelationState,
-        string riskLevel,
-        int spinCount,
-        int reward,
-        int debt,
-        int riskScore,
-        bool stoppedByPlayer,
-        bool sawHairpin,
-        bool sawDebt)
+    
+    public void FinishJackpotMiniGame(JackpotFinalResult result)
     {
         if (gameState == null)
         {
@@ -199,20 +188,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        gameState.ApplyJackpotResult(
-            outcome,
-            token,
-            leoRelationState,
-            riskLevel,
-            spinCount,
-            reward,
-            debt,
-            riskScore,
-            stoppedByPlayer,
-            sawHairpin,
-            sawDebt
-        );
-
+        gameState.ApplyJackpotResult(result);
         ReturnFromMiniGame();
     }
 

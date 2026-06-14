@@ -17,26 +17,14 @@ public sealed class JackpotGameStateAdapter : MonoBehaviour
             return;
         }
 
-        GameManager.Instance.gameState.ApplyJackpotResult(
-            result.Outcome.ToString(),
-            result.Token.ToString(),
-            result.LeoRelationState.ToString(),
-            result.RiskLevel.ToString(),
-            result.SpinCount,
-            result.Reward,
-            result.Debt,
-            result.RiskScore,
-            result.StoppedByPlayer,
-            result.SawHairpin,
-            result.SawDebt
-        );
+        GameManager.Instance.gameState.ApplyJackpotResult(result);
 
         if (showDebugLogs)
         {
             Debug.Log(
-                $"[JackpotGameStateAdapter] Saved only | Outcome={result.Outcome}, " +
-                $"Token={result.Token}, LeoNext={result.LeoRelationState}, " +
-                $"Hairpin={result.SawHairpin}, Debt={result.Debt}"
+                $"[JackpotGameStateAdapter] Saved | Outcome={result.Outcome}, " +
+                $"Jackpot={result.IsJackpot}, Joker={result.JokerCardObtained}, " +
+                $"Spins={result.SpinCount}"
             );
         }
     }
@@ -48,25 +36,13 @@ public sealed class JackpotGameStateAdapter : MonoBehaviour
 
         if (GameManager.Instance == null)
         {
-            Debug.LogWarning("[JackpotGameStateAdapter] GameManager.Instance не найден. Результат не может быть завершён через основную игру.");
+            Debug.LogWarning("[JackpotGameStateAdapter] GameManager.Instance не найден.");
             return;
         }
 
         if (finishThroughGameManager)
         {
-            GameManager.Instance.FinishJackpotMiniGame(
-                result.Outcome.ToString(),
-                result.Token.ToString(),
-                result.LeoRelationState.ToString(),
-                result.RiskLevel.ToString(),
-                result.SpinCount,
-                result.Reward,
-                result.Debt,
-                result.RiskScore,
-                result.StoppedByPlayer,
-                result.SawHairpin,
-                result.SawDebt
-            );
+            GameManager.Instance.FinishJackpotMiniGame(result);
             return;
         }
 

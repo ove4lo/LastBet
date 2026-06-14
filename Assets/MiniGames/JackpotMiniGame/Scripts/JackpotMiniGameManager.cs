@@ -5,23 +5,20 @@ public sealed class JackpotMiniGameManager : MonoBehaviour
 {
     [Header("Core")]
     [SerializeField] private JackpotSlotMachine slotMachine;
-    [SerializeField] private JackpotRiskModel riskModel;
-    [SerializeField] private JackpotNarrativeState narrativeState;
     [SerializeField] private JackpotResultResolver resultResolver;
-    [SerializeField] private JackpotGameStateAdapter gameStateAdapter;
 
     [Header("UI")]
     [SerializeField] private JackpotUiPanel uiPanel;
     [SerializeField] private JackpotMessagePanel messagePanel;
-    [SerializeField] private JackpotTutorialOverlay tutorialOverlay;
 
     [Header("Настройки")]
-    [SerializeField] private bool startOnAwake = false;
-    [SerializeField] private bool showTutorialOnStart = true;
+    [SerializeField] private bool startOnAwake = true;
+    [SerializeField] private int maxSpinCount = 3;
 
     public JackpotMiniGameState State { get; private set; } = JackpotMiniGameState.NotStarted;
     public JackpotFinalResult FinalResult { get; private set; }
 
+    private int _spinCount;
     private Coroutine _spinRoutine;
 
     private void Awake()
@@ -37,114 +34,124 @@ public sealed class JackpotMiniGameManager : MonoBehaviour
 
     public void StartMiniGame()
     {
-        State = JackpotMiniGameState.Intro;
-        FinalResult = null;
-
-        riskModel?.ResetModel();
-        narrativeState?.ResetState();
-        uiPanel?.Initialize();
-        uiPanel?.UpdateState(riskModel);
-        messagePanel?.ShowIntro();
-
-        if (showTutorialOnStart && tutorialOverlay != null)
-            tutorialOverlay.Show();
-
         State = JackpotMiniGameState.Idle;
+        FinalResult = null;
+        _spinCount = 0;
+        _spinRoutine = null;
+
+        uiPanel?.Initialize();
+        messagePanel?.ShowIntro();
     }
 
     public void Spin()
     {
-        if (State != JackpotMiniGameState.Idle && State != JackpotMiniGameState.Decision)
+        if (State != JackpotMiniGameState.Idle)
             return;
 
-        if (slotMachine == null || riskModel == null)
+        if (_spinRoutine != null)
+            return;
+
+        if (slotMachine == null || resultResolver == null)
         {
-            Debug.LogWarning("[JackpotMiniGameManager] Не назначены slotMachine или riskModel.");
+            Debug.LogWarning("[Jackpot] slotMachine или resultResolver не назначены.", this);
             return;
         }
 
-        if (_spinRoutine != null)
-            StopCoroutine(_spinRoutine);
-
         _spinRoutine = StartCoroutine(SpinFlow());
-    }
-
-    public void StopAndTakeResult()
-    {
-        if (State != JackpotMiniGameState.Decision && State != JackpotMiniGameState.Idle)
-            return;
-
-        narrativeState?.RegisterPlayerStop();
-        Complete(stoppedByPlayer: true);
-    }
-
-    public void ContinueToMainGame()
-    {
-        if (FinalResult == null)
-            return;
-
-        gameStateAdapter?.FinishMiniGame(FinalResult);
     }
 
     private IEnumerator SpinFlow()
     {
         State = JackpotMiniGameState.Spinning;
-        uiPanel?.SetSpinEnabled(false);
-        uiPanel?.SetStopEnabled(false);
+        _spinCount++;
+
+        bool mustRollJackpot = _spinCount >= maxSpinCount;
+
         uiPanel?.OnSpinStarted();
-        messagePanel?.ShowSpinStarted();
+        messagePanel?.Show($"Крутка {_spinCount} из {maxSpinCount}. Барабаны крутятся...");
 
         JackpotSpinResult spinResult = null;
-        yield return slotMachine.SpinRoutine(riskModel, result => spinResult = result);
 
-        uiPanel?.OnSpinEnded();
+        yield return slotMachine.SpinRoutine(
+            _spinCount,
+            mustRollJackpot,
+            result => spinResult = result
+        );
 
-        State = JackpotMiniGameState.ResolvingSpin;
-        riskModel.ApplySpin(spinResult);
-        narrativeState?.RegisterSpin(spinResult, riskModel.SpinCount);
+        JackpotFinalResult resolved = resultResolver.ResolveSpin(spinResult, _spinCount);
 
-        uiPanel?.UpdateState(riskModel);
-        messagePanel?.ShowSpinResult(spinResult, riskModel);
-
-        if (spinResult != null && spinResult.HasDebt)
-            uiPanel?.ShowDebtFlash();
-
-        if (spinResult != null && spinResult.HasHairpin)
-            uiPanel?.ShowHairpinInterference();
-
-        if (riskModel.ShouldForceEnd)
+        if (resolved != null && resolved.IsJackpot)
         {
-            narrativeState?.RegisterForcedStop();
-            messagePanel?.ShowForcedEnd();
-            Complete(stoppedByPlayer: false);
+            yield return JackpotFlow(resolved);
             _spinRoutine = null;
             yield break;
         }
 
-        State = JackpotMiniGameState.Decision;
-        messagePanel?.ShowDecision(riskModel);
-        uiPanel?.SetSpinEnabled(true);
-        uiPanel?.SetStopEnabled(riskModel.HasRewardToTake || riskModel.SpinCount > 0);
+        messagePanel?.ShowSpinResult(resolved);
+
+        if (_spinCount < maxSpinCount)
+        {
+            State = JackpotMiniGameState.Idle;
+            uiPanel?.OnSpinEnded(true);
+        }
+        else
+        {
+            Debug.LogError("[Jackpot] Третья крутка не вернула jackpot-комбинацию. Проверь JackpotSlotMachine.SpinRoutine().", this);
+            State = JackpotMiniGameState.Idle;
+            uiPanel?.OnSpinEnded(false);
+        }
+
         _spinRoutine = null;
     }
 
-    private void Complete(bool stoppedByPlayer)
+    private IEnumerator JackpotFlow(JackpotFinalResult result)
     {
-        if (State == JackpotMiniGameState.Completed)
-            return;
+        State = JackpotMiniGameState.ShowingResult;
+        FinalResult = result;
+
+        uiPanel?.SetSpinEnabled(false);
+        uiPanel?.SetContinueVisible(false);
+
+        messagePanel?.Show("ДЖЕКПОТ! Автомат выдаёт карту.");
+
+        yield return new WaitForSeconds(0.45f);
+
+        messagePanel?.Show("Эвелин замирает: «Автомат выдаёт карты?»");
+
+        bool animationDone = false;
+
+        if (uiPanel != null)
+        {
+            uiPanel.AnimateJokerCard(() => animationDone = true);
+
+            float timeout = 3f;
+            while (!animationDone && timeout > 0f)
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        yield return new WaitForSeconds(0.35f);
+
+        messagePanel?.Show("Эвелин убирает карту в карман.");
 
         State = JackpotMiniGameState.Completed;
-        uiPanel?.SetSpinEnabled(false);
-        uiPanel?.SetStopEnabled(false);
+        uiPanel?.ShowFinalState();
+    }
 
-        if (resultResolver == null)
+    public void ContinueAfterResult()
+    {
+        if (FinalResult == null)
+            return;
+
+        if (GameManager.Instance != null)
         {
-            Debug.LogWarning("[JackpotMiniGameManager] resultResolver не назначен.");
+            GameManager.Instance.FinishJackpotMiniGame(FinalResult);
             return;
         }
 
-        FinalResult = resultResolver.Resolve(riskModel, narrativeState, stoppedByPlayer);
-        uiPanel?.ShowResult(FinalResult);
+        Debug.LogWarning("[Jackpot] GameManager.Instance не найден. Тестовый запуск сцены.", this);
     }
 
     private void BindButtons()
@@ -158,16 +165,10 @@ public sealed class JackpotMiniGameManager : MonoBehaviour
             uiPanel.SpinButton.onClick.AddListener(Spin);
         }
 
-        if (uiPanel.StopButton != null)
-        {
-            uiPanel.StopButton.onClick.RemoveAllListeners();
-            uiPanel.StopButton.onClick.AddListener(StopAndTakeResult);
-        }
-
         if (uiPanel.ContinueButton != null)
         {
             uiPanel.ContinueButton.onClick.RemoveAllListeners();
-            uiPanel.ContinueButton.onClick.AddListener(ContinueToMainGame);
+            uiPanel.ContinueButton.onClick.AddListener(ContinueAfterResult);
         }
     }
 }
