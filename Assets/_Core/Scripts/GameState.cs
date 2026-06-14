@@ -118,6 +118,21 @@ public class GameState : ScriptableObject
 
 
     // =========================================================
+    // ДЖОКЕР / КАБИНЕТ ВИКТОРА
+    // =========================================================
+
+    [Header("Джокер / Кабинет Виктора")]
+    [Tooltip("Мини-игра Джокер завершена")]
+    public bool jokerCompleted;
+
+    [Tooltip("Мини-игра Джокер выиграна")]
+    public bool jokerWon;
+
+    [Tooltip("Правда доступна для финальной реплики")]
+    public bool truthAvailable;
+
+
+    // =========================================================
     // МЕТОДЫ — ЖЕТОНЫ
     // =========================================================
 
@@ -258,6 +273,30 @@ public class GameState : ScriptableObject
 
 
     // =========================================================
+    // МЕТОДЫ — ДЖОКЕР / КАБИНЕТ ВИКТОРА
+    // =========================================================
+
+    public void ApplyJokerResult(bool won)
+    {
+        jokerCompleted = true;
+        jokerWon = won;
+
+        if (won)
+        {
+            truthAvailable = true;
+            AddToken(TokenType.Analysis);
+            Debug.Log("[Джокер] Победа → Анализ +1, правда доступна");
+        }
+        else
+        {
+            truthAvailable = false;
+            distortionIncreased = true;
+            Debug.Log("[Джокер] Поражение → искажение усилено, правда недоступна");
+        }
+    }
+
+
+    // =========================================================
     // СБРОС
     // =========================================================
 
@@ -268,6 +307,7 @@ public class GameState : ScriptableObject
         ResetDressingCocktail();
         ResetBarMiniGame();
         ResetJackpot();
+        ResetJoker();
 
         Debug.Log("[GameState] Сброс выполнен");
     }
@@ -325,5 +365,12 @@ public class GameState : ScriptableObject
 
         jokerCardObtained = false;
         jokerCardUsed = false;
+    }
+
+    private void ResetJoker()
+    {
+        jokerCompleted = false;
+        jokerWon = false;
+        truthAvailable = false;
     }
 }

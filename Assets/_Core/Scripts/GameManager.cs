@@ -192,7 +192,20 @@ public class GameManager : MonoBehaviour
         ReturnFromMiniGame();
     }
 
-    private void ReturnFromMiniGame()
+    public void FinishJokerMiniGame(bool won)
+    {
+        if (gameState == null)
+        {
+            Debug.LogError("[GameManager] GameState не назначен", this);
+            return;
+        }
+
+        gameState.ApplyJokerResult(won);
+        Debug.Log($"[GameManager] Джокер завершён. Won={won}");
+        ReturnFromMiniGame();
+    }
+
+    public void ReturnFromMiniGame()
     {
         SaveSystem.Save(gameState);
         SetState(GameplayState.Playing);

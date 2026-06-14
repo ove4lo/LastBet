@@ -358,7 +358,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 300}
+  m_SizeDelta: {x: 400, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &431837349
 CanvasGroup:
@@ -385,7 +385,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -508,10 +508,10 @@ RectTransform:
   - {fileID: 1051992146}
   - {fileID: 902407976}
   - {fileID: 1081549945}
+  - {fileID: 1862896701}
   - {fileID: 431837348}
   - {fileID: 1427105515}
   - {fileID: 548467428}
-  - {fileID: 1862896701}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -960,6 +960,7 @@ MonoBehaviour:
     weight: 20
   firstSpinJackpotChance: 0.25
   secondSpinJackpotChance: 0.45
+  treatAnyTripleAsJackpot: 1
   leftSpinDuration: 1.8
   centerSpinDuration: 2.1
   rightSpinDuration: 2.4
